@@ -89,13 +89,18 @@ if(${MEDIASOUPCLIENT_LOG_DEV})
 	)
 endif()
 
+
+
+	
+
+
 # Source Dependencies.
 add_subdirectory(deps/libsdptransform "${CMAKE_CURRENT_BINARY_DIR}/libsdptransform")
 
 # Add some compile flags to our source files.
 if(MSVC)
 	set_source_files_properties(${SOURCE_FILES}
-		PROPERTIES COMPILE_FLAGS "/W3 /WX")
+		PROPERTIES COMPILE_FLAGS "/W3 ")
 else()
 	set_source_files_properties(${SOURCE_FILES}
 		PROPERTIES COMPILE_FLAGS -Wall -Wextra -Wpedantic)

@@ -1,5 +1,5 @@
 #define MSC_CLASS "ortc"
-// #define MSC_LOG_DEV
+//#define MSC_LOG_DEV
 
 #include "ortc.hpp"
 #include "Exception.hpp"
@@ -13,6 +13,7 @@ using json = nlohmann::json;
 
 static bool isRtxCodec(const json& codec)
 {
+	using namespace mediasoupclient;
 	MSC_TRACE();
 
 	static const std::regex regex(".+/rtx$", std::regex_constants::ECMAScript);

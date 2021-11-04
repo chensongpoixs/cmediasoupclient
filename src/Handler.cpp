@@ -65,8 +65,11 @@ void Handler::UpdateIceServers(const json& iceServerUris)
 	for (auto& iceServerUri : iceServerUris)
 	{
 		webrtc::PeerConnectionInterface::IceServer iceServer;
-		iceServer.uri = iceServerUri;
-		configuration.servers.push_back(iceServer);
+		if (iceServerUri.is_string())
+		{
+			iceServer.uri = iceServerUri.dump();
+			configuration.servers.push_back(iceServer);
+		}
 	}
 
 	if (this->pc->SetConfiguration(configuration))

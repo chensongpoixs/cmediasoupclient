@@ -1,4 +1,4 @@
-#ifndef MSC_UTILS_HPP
+﻿#ifndef MSC_UTILS_HPP
 #define MSC_UTILS_HPP
 
 #include <cstdint> // uint32_t
@@ -60,7 +60,7 @@ namespace Utils
 		/* clang-format on */
 
 		// Seed with time.
-		static unsigned int seed = time(nullptr);
+		static unsigned int seed = ::time(NULL);
 
 		// Engine based on the Mersenne Twister 19937 (64 bits).
 		static std::mt19937_64 rng(seed);
