@@ -67,9 +67,9 @@ std::future<void> Broadcaster::OnConnect(
 	if (res->status != 200)
 	{
 		std::cerr << "[ERROR] unable to connect transport"
-			<< " [status code:" << res->status << ", body:\"" << res->reason << "\"]" << std::endl;
+			<< " [status code:" << res->status << ", body:\"" << res->body << "\"]" << std::endl;
 
-		promise.set_exception(std::make_exception_ptr(res->reason));
+		promise.set_exception(std::make_exception_ptr(res->body));
 		return promise.get_future();
 	}
 
@@ -154,12 +154,12 @@ std::future<std::string> Broadcaster::OnProduce(
 	if (res->status != 200)
 	{
 		std::cerr << "[ERROR] unable to create producer"
-			<< " [status code:" << res->status << ", body:\"" << res->reason << "\"]" << std::endl;
+			<< " [status code:" << res->status << ", body:\"" << res->body << "\"]" << std::endl;
 
-		promise.set_exception(std::make_exception_ptr(res->reason));
+		promise.set_exception(std::make_exception_ptr(res->body));
 		return promise.get_future();
 	}
-	auto response = json::parse(res->reason);
+	auto response = json::parse(res->body);
 
 	auto it = response.find("id");
 	if (it == response.end() || !it->is_string())
@@ -220,7 +220,7 @@ void Broadcaster::Start(
 	if (res->status != 200)
 	{
 		std::cerr << "[ERROR] unable to create Broadcaster"
-			<< " [status code:" << res->status << ", body:\"" << res->reason << "\"]" << std::endl;
+			<< " [status code:" << res->status << ", body:\"" << res->body << "\"]" << std::endl;
 
 		//promise.set_exception(std::make_exception_ptr(r.text));
 		return;
@@ -260,12 +260,12 @@ void Broadcaster::Start(
 	if (res->status != 200)
 	{
 		std::cerr << "[ERROR] unable to create mediasoup WebRtcTransport"
-			<< " [status code:" << std::to_string(res->status) << ", body:\"" << res->reason.c_str() << "\"]" << std::endl;
+			<< " [status code:" << std::to_string(res->status) << ", body:\"" << res->body.c_str() << "\"]" << std::endl;
 
 		//promise.set_exception(std::make_exception_ptr(r.text));
 		return;
 	}
-	auto response = json::parse(res->reason);
+	auto response = json::parse(res->body);
 
 	if (response.find("id") == response.end())
 	{

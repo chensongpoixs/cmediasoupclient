@@ -28,12 +28,14 @@ int main(int argc, char* argv[])
 	signal(SIGINT, signalHandler);
 
 	// Retrieve configuration from environment variables.
-	const char* envServerUrl    = std::getenv("SERVER_URL");
-	const char* envRoomId       = std::getenv("ROOM_ID");
+	//const char* envServerUrl    = std::getenv("SERVER_URL");
+	//const char* envRoomId       = std::getenv("ROOM_ID");
 	const char* envEnableAudio  = std::getenv("ENABLE_AUDIO");
 	const char* envUseSimulcast = std::getenv("USE_SIMULCAST");
 	const char* envWebrtcDebug  = std::getenv("WEBRTC_DEBUG");
-
+	//SERVER_URL=https://my.mediasoup-demo.org:4443 ROOM_ID=broadcaster build/broadcaster
+	const char * envServerUrl = "http://169.254.119.31:8888";
+	const char * envRoomId = "chensong";
 	if (envServerUrl == nullptr)
 	{
 		std::cerr << "[ERROR] missing 'SERVER_URL' environment variable" << std::endl;
@@ -49,7 +51,7 @@ int main(int argc, char* argv[])
 	}
 
 	std::string baseUrl = envServerUrl;
-	baseUrl.append("/rooms/").append("chensong");
+	baseUrl.append("/rooms/").append(envRoomId);
 
 	bool enableAudio = true;
 
@@ -91,14 +93,14 @@ int main(int argc, char* argv[])
 */
 
 	httplib::Client cli("127.0.0.1", 8888);
-
-	auto res = cli.Get("/rooms/chensong");
+	//std::string url = "/rooms/" + std::string(envRoomId);
+	auto res = cli.Get(baseUrl.c_str());
 	{
 		std::cout << res->status << std::endl;
 		std::cout << res->get_header_value("Content-Type") << std::endl;
 		std::cout << res->body << std::endl;
 	} 
-	if (!res)
+	if (res == nullptr)
 	{
 		std::cout << "error code: " << res->status << std::endl;
 		return -1;
@@ -109,8 +111,9 @@ int main(int argc, char* argv[])
 		std::cout << "error code: " << res->status << std::endl;
 		return -1;
 	}
+	std::cout << "[" << res->reason << "]" << std::endl;
 	//httplib::Client client();
-	auto response = nlohmann::json::parse(res->reason);
+	auto response = nlohmann::json::parse(res->body);
 
 	broadcaster.Start(baseUrl, enableAudio, useSimulcast, response);
 
