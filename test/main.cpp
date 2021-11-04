@@ -8,9 +8,14 @@
 #include "httplib.h"
 using json = nlohmann::json;
 
+static Broadcaster broadcaster;
+
 void signalHandler(int signum)
 {
 	std::cout << "[INFO] interrupt signal (" << signum << ") received" << std::endl;
+
+	// Remove broadcaster from the server.
+	broadcaster.Stop();
 
 	std::cout << "[INFO] leaving!" << std::endl;
 
@@ -28,7 +33,6 @@ int main(int argc, char* argv[])
 	const char* envEnableAudio  = std::getenv("ENABLE_AUDIO");
 	const char* envUseSimulcast = std::getenv("USE_SIMULCAST");
 	const char* envWebrtcDebug  = std::getenv("WEBRTC_DEBUG");
-	const char* envVerifySsl    = std::getenv("VERIFY_SSL");
 
 	if (envServerUrl == nullptr)
 	{
@@ -43,9 +47,9 @@ int main(int argc, char* argv[])
 
 		return 1;
 	}
-	// /rooms/zglyc14c
+
 	std::string baseUrl = envServerUrl;
-	baseUrl.append("/rooms/").append(envRoomId);
+	baseUrl.append("/rooms/").append("chensong");
 
 	bool enableAudio = true;
 
@@ -57,20 +61,13 @@ int main(int argc, char* argv[])
 	if (envUseSimulcast && std::string(envUseSimulcast) == "false")
 		useSimulcast = false;
 
-	bool verifySsl = true;
-	if (envVerifySsl && std::string(envVerifySsl) == "false")
-		verifySsl = false;
-
 	// Set RTC logging severity.
-	if (envWebrtcDebug)
-	{
-		if (std::string(envWebrtcDebug) == "info")
-			rtc::LogMessage::LogToDebug(rtc::LoggingSeverity::LS_INFO);
-		else if (std::string(envWebrtcDebug) == "warn")
-			rtc::LogMessage::LogToDebug(rtc::LoggingSeverity::LS_WARNING);
-		else if (std::string(envWebrtcDebug) == "error")
-			rtc::LogMessage::LogToDebug(rtc::LoggingSeverity::LS_ERROR);
-	}
+	if (envWebrtcDebug && std::string(envWebrtcDebug) == "info")
+		rtc::LogMessage::LogToDebug(rtc::LoggingSeverity::LS_INFO);
+	else if (envWebrtcDebug && std::string(envWebrtcDebug) == "warn")
+		rtc::LogMessage::LogToDebug(rtc::LoggingSeverity::LS_WARNING);
+	else if (envWebrtcDebug && std::string(envWebrtcDebug) == "error")
+		rtc::LogMessage::LogToDebug(rtc::LoggingSeverity::LS_ERROR);
 
 	auto logLevel = mediasoupclient::Logger::LogLevel::LOG_DEBUG;
 	mediasoupclient::Logger::SetLogLevel(logLevel);
@@ -82,7 +79,7 @@ int main(int argc, char* argv[])
 	std::cout << "[INFO] welcome to mediasoup broadcaster app!\n" << std::endl;
 
 	std::cout << "[INFO] verifying that room '" << envRoomId << "' exists..." << std::endl;
-	/*auto r = cpr::GetAsync(cpr::Url{ baseUrl }, cpr::VerifySsl{ verifySsl }).get();
+	/*auto r = cpr::GetAsync(cpr::Url{ baseUrl }).get();
 
 	if (r.status_code != 200)
 	{
@@ -91,38 +88,35 @@ int main(int argc, char* argv[])
 
 		return 1;
 	}
-	else*/
-	{
-		std::cout << "[INFO] found room" << envRoomId << std::endl;
-	}
+*/
 
-	httplib::Client cli("localhost", 8888);
+	httplib::Client cli("127.0.0.1", 8888);
 
-
-	auto res = cli.Get(baseUrl.c_str());
-	if (res && res->status == 200)
+	auto res = cli.Get("/rooms/chensong");
 	{
 		std::cout << res->status << std::endl;
 		std::cout << res->get_header_value("Content-Type") << std::endl;
 		std::cout << res->body << std::endl;
-		std::cout << res->reason  << std::endl;
-	}
-	else {
-		std::cout << "error code: " << res.error() << std::endl;
-	}
+	} 
+	if (!res)
+	{
+		std::cout << "error code: " << res->status << std::endl;
+		return -1;
 
+	}
+	if (res->status != 200)
+	{
+		std::cout << "error code: " << res->status << std::endl;
+		return -1;
+	}
+	//httplib::Client client();
 	auto response = nlohmann::json::parse(res->reason);
 
-	Broadcaster broadcaster;
+	broadcaster.Start(baseUrl, enableAudio, useSimulcast, response);
 
-	broadcaster.Start(baseUrl, enableAudio, useSimulcast, response, verifySsl);
+	std::cout << "[INFO] press Ctrl+C or Cmd+C to leave...";
 
-	std::cout << "[INFO] press Ctrl+C or Cmd+C to leave..." << std::endl;
-
-	while (true)
-	{
-		std::cin.get();
-	}
+	//(void)sigsuspend(nullptr);
 
 	return 0;
 }

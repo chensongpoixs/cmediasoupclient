@@ -1,18 +1,11 @@
 set(
 	SOURCE_FILES
-	Device.test.cpp
-	Handler.test.cpp
-	PeerConnection.test.cpp
-	data/parameters.cpp
-	mediasoupclient.test.cpp
-	ortc.test.cpp
-	peerConnectionUtils.cpp
-	scalabilityMode.test.cpp
-	sdp/RemoteSdp.test.cpp
-	sdp/Utils.test.cpp
-	tests.cpp
-	VcmCapturer.cpp
-	VideoCapturer.cpp
+Broadcaster.cpp
+httplib.cc
+main.cpp
+peerConnectionUtils.cpp
+VcmCapturer.cpp
+VideoCapturer.cpp
 )
 
 # Create target.
@@ -21,6 +14,7 @@ add_executable(test_mediasoupclient ${SOURCE_FILES})
 # Private (implementation) header files.
 target_include_directories(test_mediasoupclient PRIVATE
 	${mediasoupclient_SOURCE_DIR}/include
+	${mediasoupclient_SOURCE_DIR}
 	include
 )
 

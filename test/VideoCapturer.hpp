@@ -1,12 +1,14 @@
-#ifndef MSC_TEST_VIDEO_CAPTURER_HPP
-#define MSC_TEST_VIDEO_CAPTURER_HPP
+#ifndef VIDEO_CAPTURER_HPP
+#define VIDEO_CAPTURER_HPP
+
+#include <stddef.h>
+
+#include <memory>
 
 #include "media/base/video_adapter.h"
 #include "media/base/video_broadcaster.h"
 #include "api/video/video_frame.h"
 #include "api/video/video_source_interface.h"
-#include <stddef.h>
-#include <memory>
 
 class VideoCapturer : public rtc::VideoSourceInterface<webrtc::VideoFrame>
 {

@@ -1,37 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\Device.test.cpp">
+    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\Broadcaster.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\Handler.test.cpp">
+    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\httplib.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\PeerConnection.test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\data\parameters.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\mediasoupclient.test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\ortc.test.cpp">
+    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\peerConnectionUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\scalabilityMode.test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\sdp\RemoteSdp.test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\sdp\Utils.test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\VcmCapturer.cpp">
@@ -40,10 +19,6 @@
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\VideoCapturer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\Broadcaster.cpp" />
-    <ClCompile Include="..\..\test\main.cpp" />
-    <ClCompile Include="..\..\test\MediaStreamTrackFactory.cpp" />
-    <ClCompile Include="..\..\test\httplib.cc" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\CMakeLists.txt" />
@@ -52,10 +27,5 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{92AF04AE-B3A4-3F2A-81FA-64B8AFC49089}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\test\Broadcaster.hpp" />
-    <ClInclude Include="..\..\test\MediaStreamTrackFactory.hpp" />
-    <ClInclude Include="..\..\test\httplib.h" />
   </ItemGroup>
 </Project>

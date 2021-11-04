@@ -183,7 +183,7 @@ std::pair<std::string, nlohmann::json> SendHandler::Send(
 		// Set MID.
 		sendingRtpParameters["mid"] = localId;
 	}
-	catch (Exception& error)
+	catch (Exception& )
 	{
 		// Panic here. Try to undo things.
 		transceiver->SetDirection(webrtc::RtpTransceiverDirection::kInactive);
@@ -237,7 +237,7 @@ std::pair<std::string, nlohmann::json> SendHandler::Send(
 
 		this->pc->SetRemoteDescription(PeerConnection::SdpType::ANSWER, answer);
 	}
-	catch (Exception& error)
+	catch (Exception& )
 	{
 		throw;
 	}
@@ -469,7 +469,7 @@ std::pair<std::string, webrtc::MediaStreamTrackInterface*> RecvHandler::Receive(
 		// May throw.
 		this->pc->SetLocalDescription(PeerConnection::SdpType::ANSWER, answer);
 	}
-	catch (Exception& error)
+	catch (Exception& )
 	{
 		throw;
 	}
