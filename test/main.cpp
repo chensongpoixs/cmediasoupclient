@@ -38,14 +38,14 @@ int main(int argc, char* argv[])
 	const char * envRoomId = "chensong";
 	if (envServerUrl == nullptr)
 	{
-		std::cerr << "[ERROR] missing 'SERVER_URL' environment variable" << std::endl;
+		RTC_LOG(INFO)  << "[ERROR] missing 'SERVER_URL' environment variable"  ;
 
 		return 1;
 	}
 
 	if (envRoomId == nullptr)
 	{
-		std::cerr << "[ERROR] missing 'ROOM_ID' environment variable" << std::endl;
+		RTC_LOG(INFO)  << "[ERROR] missing 'ROOM_ID' environment variable"  ;
 
 		return 1;
 	}
@@ -78,9 +78,9 @@ int main(int argc, char* argv[])
 	// Initilize mediasoupclient.
 	mediasoupclient::Initialize();
 
-	std::cout << "[INFO] welcome to mediasoup broadcaster app!\n" << std::endl;
+	RTC_LOG(INFO)  << "[INFO] welcome to mediasoup broadcaster app!\n"  ;
 
-	std::cout << "[INFO] verifying that room '" << envRoomId << "' exists..." << std::endl;
+	RTC_LOG(INFO)  << "[INFO] verifying that room '" << envRoomId << "' exists..."  ;
 	/*auto r = cpr::GetAsync(cpr::Url{ baseUrl }).get();
 
 	if (r.status_code != 200)
@@ -96,30 +96,38 @@ int main(int argc, char* argv[])
 	//std::string url = "/rooms/" + std::string(envRoomId);
 	auto res = cli.Get(baseUrl.c_str());
 	{
-		std::cout << res->status << std::endl;
-		std::cout << res->get_header_value("Content-Type") << std::endl;
-		std::cout << res->body << std::endl;
+		RTC_LOG(INFO)  << res->status  ;
+		RTC_LOG(INFO)  << res->get_header_value("Content-Type")  ;
+		RTC_LOG(INFO)  << res->body  ;
 	} 
 	if (res == nullptr)
 	{
-		std::cout << "error code: " << res->status << std::endl;
+		RTC_LOG(INFO)  << "error code: " << res->status  ;
 		return -1;
 
 	}
 	if (res->status != 200)
 	{
-		std::cout << "error code: " << res->status << std::endl;
+		RTC_LOG(INFO)  << "error code: " << res->status  ;
 		return -1;
 	}
-	std::cout << "[" << res->reason << "]" << std::endl;
+	RTC_LOG(INFO)  <<  __FUNCTION__ << __LINE__ <<"[" << res->body << "]" ;
+	RTC_LOG(INFO)  << "[" << res->reason << "]"  ;
 	//httplib::Client client();
 	auto response = nlohmann::json::parse(res->body);
 
 	broadcaster.Start(baseUrl, enableAudio, useSimulcast, response);
 
-	std::cout << "[INFO] press Ctrl+C or Cmd+C to leave...";
+	RTC_LOG(INFO)  << "[INFO] press Ctrl+C or Cmd+C to leave...";
 
 	//(void)sigsuspend(nullptr);
+	//signalHandler(15);
+	
+	while (true)
+	{
+		RTC_LOG(INFO) << "milliseconds 10000 ...";
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
+	}
 	return 0;
 }

@@ -80,6 +80,7 @@ void Handler::UpdateIceServers(const json& iceServerUris)
 
 void Handler::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState newState)
 {
+	RTC_LOG(INFO) << "webrtc::PeerConnectionInterface::IceConnectionState = " << newState;
 	return this->privateListener->OnConnectionStateChange(newState);
 }
 
@@ -98,7 +99,7 @@ void Handler::SetupTransport(const std::string& localDtlsRole, json localSdpObje
 
 	std::string remoteDtlsRole = localDtlsRole == "client" ? "server" : "client";
 	this->remoteSdp->UpdateDtlsRole(remoteDtlsRole);
-
+	RTC_LOG(INFO) << dtlsParameters.dump();
 	// May throw.
 	this->privateListener->OnConnect(dtlsParameters);
 	this->transportReady = true;

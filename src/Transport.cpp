@@ -130,7 +130,7 @@ void Transport::OnConnect(json& dtlsParameters)
 
 	if (this->closed)
 		throw Exception("invalid state");
-
+	RTC_LOG(INFO) << dtlsParameters.dump();
 	return this->listener->OnConnect(this, dtlsParameters).get();
 }
 
