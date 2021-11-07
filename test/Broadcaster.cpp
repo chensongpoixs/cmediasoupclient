@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include "httplib.h"
+#include "desktop_capture.h"
 using json = nlohmann::json;
 
 void Broadcaster::OnTransportClose(mediasoupclient::Producer* /*producer*/)

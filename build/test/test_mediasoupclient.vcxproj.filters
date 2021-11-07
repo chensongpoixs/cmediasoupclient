@@ -19,6 +19,8 @@
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\VideoCapturer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\desktop_capture.cc" />
+    <ClCompile Include="..\..\test\desktop_capture_source.cc" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\CMakeLists.txt" />
@@ -27,5 +29,9 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{92AF04AE-B3A4-3F2A-81FA-64B8AFC49089}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\test\desktop_capture.h" />
+    <ClInclude Include="..\..\test\desktop_capture_source.h" />
   </ItemGroup>
 </Project>

@@ -316,6 +316,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\test\desktop_capture.cc" />
+    <ClCompile Include="..\..\test\desktop_capture_source.cc" />
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\Broadcaster.cpp" />
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\httplib.cc" />
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\main.cpp" />
@@ -338,6 +340,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{4F84D1F2-CC39-300D-94C0-9D24443AD6B6}</Project>
       <Name>sdptransform</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\test\desktop_capture.h" />
+    <ClInclude Include="..\..\test\desktop_capture_source.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -9,16 +9,17 @@
 #include "api/video_codecs/builtin_video_decoder_factory.h"
 #include "api/video_codecs/builtin_video_encoder_factory.h"
 #include <iostream>
-
+#include "desktop_capture.h"
 static rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> peerConnectionFactory{ nullptr };
 
 static rtc::scoped_refptr<webrtc::AudioSourceInterface> audioSource{ nullptr };
 static rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> videoSource{ nullptr };
 static rtc::scoped_refptr<webrtc::VideoCaptureModule> videoCaptureModule;
 
+//class CapturerTrackSource;
+//static rtc::scoped_refptr<CapturerTrackSource> videoDevice{ nullptr };
 class CapturerTrackSource;
 static rtc::scoped_refptr<CapturerTrackSource> videoDevice{ nullptr };
-
 static rtc::Thread* signalingThread{ nullptr };
 static rtc::Thread* workerThread{ nullptr };
 
@@ -27,8 +28,16 @@ class CapturerTrackSource : public webrtc::VideoTrackSource
 public:
 	static rtc::scoped_refptr<CapturerTrackSource> Create()
 	{
-		const size_t kWidth       = 640;
-		const size_t kHeight      = 480;
+		std::unique_ptr<DesktopCapture> capturer =
+			absl::WrapUnique(DesktopCapture::Create(30, 0));
+		if (!capturer)
+		{
+			return nullptr;
+		}
+		capturer->StartCapture();
+		return new rtc::RefCountedObject<CapturerTrackSource>(std::move(capturer));
+		/*const size_t kWidth       = 1280;
+		const size_t kHeight      = 720;
 		const size_t kFps         = 30;
 		const size_t kDeviceIndex = 0;
 		std::unique_ptr<VcmCapturer> capturer =
@@ -37,11 +46,11 @@ public:
 		{
 			return nullptr;
 		}
-		return new rtc::RefCountedObject<CapturerTrackSource>(std::move(capturer));
+		return new rtc::RefCountedObject<CapturerTrackSource>(std::move(capturer));*/
 	}
 
 protected:
-	explicit CapturerTrackSource(std::unique_ptr<VcmCapturer> capturer)
+	explicit CapturerTrackSource(std::unique_ptr<DesktopCapture> capturer)
 	  : VideoTrackSource(/*remote=*/false), capturer(std::move(capturer))
 	{
 	}
@@ -51,7 +60,7 @@ private:
 	{
 		return capturer.get();
 	}
-	std::unique_ptr<VcmCapturer> capturer;
+	std::unique_ptr<DesktopCapture> capturer;
 };
 
 // PeerConnection factory creation.
@@ -118,7 +127,7 @@ rtc::scoped_refptr<webrtc::VideoTrackInterface> createVideoTrack(const std::stri
 		createPeerConnectionFactory();
 
 	if (videoDevice == nullptr)
-		videoDevice = CapturerTrackSource::Create();
+		videoDevice = CapturerTrackSource::Create(); //CapturerTrackSource::Create();
 
 	return peerConnectionFactory->CreateVideoTrack(label, videoDevice);
 }
