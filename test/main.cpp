@@ -6,18 +6,21 @@
 #include <iostream>
 #include <string>
 #include "httplib.h"
+#include "cwebsocket_mgr.h"
+
 using json = nlohmann::json;
+
 
 static Broadcaster broadcaster;
 
 void signalHandler(int signum)
 {
-	std::cout << "[INFO] interrupt signal (" << signum << ") received" << std::endl;
-
+	RTC_LOG(LS_INFO) << "[INFO] interrupt signal (" << signum << ") received" ;
+	webrtc::g_websocket_mgr.destroy();
 	// Remove broadcaster from the server.
 	broadcaster.Stop();
 
-	std::cout << "[INFO] leaving!" << std::endl;
+	RTC_LOG(LS_INFO) << "[INFO] leaving!" ;
 
 	std::exit(signum);
 }
@@ -196,9 +199,94 @@ BOOL CALLBACK EnumWindowCallBack(HWND hWnd, LPARAM lParam)
 //
 //
 //}
+
+#include "wsclient.h"
+#ifdef _WIN32
+#pragma comment( lib, "ws2_32" )
+#include <WinSock2.h>
+#endif
+#include <assert.h>
+#include <stdio.h>
+#include <string>
+
+//using wsclient::WebSocket;
+
+class WebSocketCallback :public wsclient::WebSocketCallback
+{
+public:
+	WebSocketCallback(wsclient::WebSocket*_ws)
+		:ws(_ws)
+	{
+	}
+	void OnMessage(const std::string& message) {
+		printf("RX: %s\n",message.c_str());
+		if (message == "world") 
+			ws->close();
+	}
+
+	void OnMessage(const std::vector<uint8_t>& message) {
+	}
+
+	wsclient::WebSocket* ws;
+};
+
+std::atomic<bool> ws_connect = false;
+
+int test_ws()
+{
+#ifdef _WIN32
+	INT rc;
+	WSADATA wsaData;
+
+	rc = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (rc) {
+		printf("WSAStartup Failed.\n");
+		return 1;
+	}
+#endif
+
+	wsclient::WebSocket::pointer ws = wsclient::WebSocket::from_url("ws://127.0.0.1:8888/?roomId=chensong&peerId=xiqhlyrn", "http://127.0.0.1:8888");
+	WebSocketCallback callback(ws);
+	
+	assert(ws);
+	if (ws)
+	{
+		ws_connect.store(true);
+	}
+	//ws->send("goodbye");
+	//ws->send("hello");
+	while (ws->getReadyState() != wsclient::WebSocket::CLOSED) {
+		ws->poll();
+		ws->dispatch(callback);
+	}
+	delete ws;
+
+#ifdef _WIN32
+	WSACleanup();
+#endif
+	return 0;
+}
+
+
+
 int main(int argc, char* argv[])
 {
-	//test_win();
+	
+	//std::thread thread = std::thread(&test_ws);
+	//std::this_thread::sleep_for(std::chrono::microseconds(100));
+	
+	//test_ws();
+	if (!webrtc::g_websocket_mgr.init("ws://127.0.0.1:8888/?roomId=chensong&peerId=xiqhlyrn", "http://127.0.0.1:8888"))
+	{
+		RTC_LOG(LS_ERROR) <<"websocket_mgr init failed !!!";
+		return -1;
+	}
+	webrtc::g_websocket_mgr.start();
+	while (webrtc::g_websocket_mgr.get_status() != webrtc::CWEBSOCKET_MESSAGE)
+	{
+		RTC_LOG(LS_INFO) << "sleep microseconds .....\n";
+		std::this_thread::sleep_for(std::chrono::microseconds(100));
+	}
 	// Register signal SIGINT and signal handler.
 	signal(SIGINT, signalHandler);
 
@@ -209,9 +297,10 @@ int main(int argc, char* argv[])
 	const char* envUseSimulcast = std::getenv("USE_SIMULCAST");
 	const char* envWebrtcDebug  = std::getenv("WEBRTC_DEBUG");
 	//SERVER_URL=https://my.mediasoup-demo.org:4443 ROOM_ID=broadcaster build/broadcaster
-	const char * envServerUrl = "http://169.254.119.31:8888";
+	const char * envServerUrl = "http://127.0.0.1:8888";
 	const char * envRoomId = "chensong";
 	const char * envEnableAudio = "false";
+	const char * name = "chensong";
 	if (envServerUrl == nullptr)
 	{
 		RTC_LOG(INFO)  << "[ERROR] missing 'SERVER_URL' environment variable"  ;
@@ -292,7 +381,7 @@ int main(int argc, char* argv[])
 	//httplib::Client client();
 	auto response = nlohmann::json::parse(res->body);
 
-	broadcaster.Start(baseUrl, enableAudio, useSimulcast, response);
+	broadcaster.Start(baseUrl, enableAudio, useSimulcast, response, name);
 
 	RTC_LOG(INFO)  << "[INFO] press Ctrl+C or Cmd+C to leave...";
 

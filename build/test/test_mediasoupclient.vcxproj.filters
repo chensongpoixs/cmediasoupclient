@@ -21,6 +21,8 @@
     </ClCompile>
     <ClCompile Include="..\..\test\desktop_capture.cc" />
     <ClCompile Include="..\..\test\desktop_capture_source.cc" />
+    <ClCompile Include="..\..\test\wsclient.cpp" />
+    <ClCompile Include="..\..\test\cwebsocket_mgr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\CMakeLists.txt" />
@@ -33,5 +35,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\test\desktop_capture.h" />
     <ClInclude Include="..\..\test\desktop_capture_source.h" />
+    <ClInclude Include="..\..\test\wsclient.h" />
+    <ClInclude Include="..\..\test\cwebsocket_mgr.h" />
   </ItemGroup>
 </Project>

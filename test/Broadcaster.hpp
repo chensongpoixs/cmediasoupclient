@@ -29,7 +29,7 @@ public:
 	  const std::string& baseUrl,
 	  bool enableAudio,
 	  bool useSimulcast,
-	  const nlohmann::json& routerRtpCapabilities);
+	  const nlohmann::json& routerRtpCapabilities, std::string name);
 	void Stop();
 
 private:

@@ -174,7 +174,7 @@ std::future<std::string> Broadcaster::OnProduce(
 }
 
 void Broadcaster::Start(
-  const std::string& baseUrl, bool enableAudio, bool useSimulcast, const json& routerRtpCapabilities)
+  const std::string& baseUrl, bool enableAudio, bool useSimulcast, const json& routerRtpCapabilities, std::string name)
 {
 	RTC_LOG(INFO) << "[INFO] Broadcaster::Start()"  ;
 
@@ -189,7 +189,7 @@ void Broadcaster::Start(
 	json body =
 	{
 		{ "id",          this->id          },
-		{ "displayName", "broadcaster"     },
+		{ "displayName", name     },
 		{ "device",
 			{
 				{ "name",    "libmediasoupclient"       },
