@@ -10,9 +10,6 @@
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\peerConnectionUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\VcmCapturer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -23,6 +20,10 @@
     <ClCompile Include="..\..\test\desktop_capture_source.cc" />
     <ClCompile Include="..\..\test\wsclient.cpp" />
     <ClCompile Include="..\..\test\cwebsocket_mgr.cpp" />
+    <ClCompile Include="..\..\test\peerConnectionUtils.cpp" />
+    <ClCompile Include="..\..\test\cconfig.cpp" />
+    <ClCompile Include="..\..\test\ccfg.cpp" />
+    <ClCompile Include="..\..\test\cnet_types.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\CMakeLists.txt" />
@@ -37,5 +38,9 @@
     <ClInclude Include="..\..\test\desktop_capture_source.h" />
     <ClInclude Include="..\..\test\wsclient.h" />
     <ClInclude Include="..\..\test\cwebsocket_mgr.h" />
+    <ClInclude Include="..\..\test\peerConnectionUtils.hpp" />
+    <ClInclude Include="..\..\test\cconfig.h" />
+    <ClInclude Include="..\..\test\ccfg.h" />
+    <ClInclude Include="..\..\test\cnet_types.h" />
   </ItemGroup>
 </Project>

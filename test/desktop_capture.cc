@@ -48,7 +48,7 @@ bool DesktopCapture::Init(size_t target_fps, size_t capture_screen_index)
 
   webrtc::DesktopCapturer::SourceList sources;
   dc_->GetSourceList(&sources);
-  int index = 0;
+ /* int index = 0;
   for (const webrtc::DesktopCapturer::Source & source : sources)
   {
 	  if (source.title == "mediasoup-demo-server")
@@ -57,7 +57,7 @@ bool DesktopCapture::Init(size_t target_fps, size_t capture_screen_index)
 		  break;
 	  }
 	  ++index;
-  }
+  }*/
   if (capture_screen_index > sources.size()) {
     RTC_LOG(LS_WARNING) << "The total sources of screen is " << sources.size()
                         << ", but require source of index at "
@@ -92,7 +92,8 @@ void DesktopCapture::OnCaptureResult(
                             std::chrono::system_clock::now().time_since_epoch())
                             .count();
   if (timestamp_curr - timestamp > 1000) {
-    RTC_LOG(LS_INFO) << "FPS: " << cnt;
+    RTC_LOG(LS_INFO) << "FPS: " << cnt << ", " << frame->rect().width() << ", " << frame->rect().height();
+	RTC_LOG(LS_INFO) << "[width = " << frame->size().width() << "][height = " << frame->size().height() << "]";
     cnt = 0;
     timestamp = timestamp_curr;
   }

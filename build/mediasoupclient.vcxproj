@@ -265,6 +265,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\DataConsumer.cpp" />
+    <ClCompile Include="..\src\DataProducer.cpp" />
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\src\Consumer.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level3</WarningLevel>
@@ -355,6 +357,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{4F84D1F2-CC39-300D-94C0-9D24443AD6B6}</Project>
       <Name>sdptransform</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\DataConsumer.hpp" />
+    <ClInclude Include="..\src\DataProducer.hpp" />
+    <ClInclude Include="..\src\MediaSoupClientErrors.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

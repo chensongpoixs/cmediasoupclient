@@ -1,212 +1,275 @@
 #define MSC_CLASS "Handler"
-// #define MSC_LOG_DEV
 
 #include "Handler.hpp"
-#include "Exception.hpp"
 #include "Logger.hpp"
+#include "MediaSoupClientErrors.hpp"
 #include "PeerConnection.hpp"
-#include "sdp/Utils.hpp"
+#include "ortc.hpp"
 #include "sdptransform.hpp"
-#include <list>
-#include <utility>
+#include "sdp/Utils.hpp"
+#include <cinttypes> // PRIu64, etc
 
 using json = nlohmann::json;
 
+constexpr uint16_t SctpNumStreamsOs{ 1024u };
+constexpr uint16_t SctpNumStreamsMis{ 1024u };
+
+json SctpNumStreams = { { "OS", SctpNumStreamsOs }, { "MIS", SctpNumStreamsMis } };
+
+// Static functions declaration.
+static void fillJsonRtpEncodingParameters(
+  json& jsonEncoding, const webrtc::RtpEncodingParameters& encoding);
+
 namespace mediasoupclient
 {
-/* Handler static methods */
+	/* Handler static methods. */
 
-json Handler::GetNativeRtpCapabilities(
-  const PeerConnection::Options* peerConnectionOptions)
-{
-	MSC_TRACE();
-
-	std::unique_ptr<PeerConnection::PrivateListener> privateListener(
-	  new PeerConnection::PrivateListener());
-	std::unique_ptr<PeerConnection> pc(
-	  new PeerConnection(privateListener.get(), peerConnectionOptions));
-
-	(void)pc->AddTransceiver(cricket::MediaType::MEDIA_TYPE_AUDIO);
-	(void)pc->AddTransceiver(cricket::MediaType::MEDIA_TYPE_VIDEO);
-
-	webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-
-	// May throw.
-	auto offer                 = pc->CreateOffer(options);
-	auto sdpObject             = sdptransform::parse(offer);
-	auto nativeRtpCapabilities = Sdp::Utils::extractRtpCapabilities(sdpObject);
-
-	return nativeRtpCapabilities;
-}
-
-/* Handler instance methods */
-
-Handler::Handler(
-  PrivateListener* privateListener,
-  const json& iceParameters,
-  const json& iceCandidates,
-  const json& dtlsParameters,
-  const PeerConnection::Options* peerConnectionOptions)
-  : privateListener(privateListener)
-{
-	MSC_TRACE();
-
-	this->pc.reset(new PeerConnection(this, peerConnectionOptions));
-
-	this->remoteSdp.reset(new Sdp::RemoteSdp(iceParameters, iceCandidates, dtlsParameters));
-};
-
-void Handler::UpdateIceServers(const json& iceServerUris)
-{
-	MSC_TRACE();
-
-	auto configuration = this->pc->GetConfiguration();
-
-	for (auto& iceServerUri : iceServerUris)
+	json Handler::GetNativeRtpCapabilities(const PeerConnection::Options* peerConnectionOptions)
 	{
-		webrtc::PeerConnectionInterface::IceServer iceServer;
-		if (iceServerUri.is_string())
-		{
-			iceServer.uri = iceServerUri.dump();
-			configuration.servers.push_back(iceServer);
-		}
-	}
+		MSC_TRACE();
 
-	if (this->pc->SetConfiguration(configuration))
-		return;
+		std::unique_ptr<PeerConnection::PrivateListener> privateListener(
+		  new PeerConnection::PrivateListener());
+		std::unique_ptr<PeerConnection> pc(
+		  new PeerConnection(privateListener.get(), peerConnectionOptions));
 
-	throw Exception("UpdateIceServers() failed");
-};
+		(void)pc->AddTransceiver(cricket::MediaType::MEDIA_TYPE_AUDIO);
+		(void)pc->AddTransceiver(cricket::MediaType::MEDIA_TYPE_VIDEO);
 
-void Handler::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState newState)
-{
-	RTC_LOG(INFO) << "webrtc::PeerConnectionInterface::IceConnectionState = " << newState;
-	return this->privateListener->OnConnectionStateChange(newState);
-}
-
-void Handler::SetupTransport(const std::string& localDtlsRole, json localSdpObject)
-{
-	MSC_TRACE();
-
-	if (localSdpObject.empty())
-		localSdpObject = sdptransform::parse(this->pc->GetLocalDescription());
-
-	// Get our local DTLS parameters.
-	auto dtlsParameters = Sdp::Utils::extractDtlsParameters(localSdpObject);
-
-	// Set our DTLS role.
-	dtlsParameters["role"] = localDtlsRole;
-
-	std::string remoteDtlsRole = localDtlsRole == "client" ? "server" : "client";
-	this->remoteSdp->UpdateDtlsRole(remoteDtlsRole);
-	RTC_LOG(INFO) << dtlsParameters.dump();
-	// May throw.
-	this->privateListener->OnConnect(dtlsParameters);
-	this->transportReady = true;
-};
-
-/* SendHandler methods */
-
-SendHandler::SendHandler(
-  Handler::PrivateListener* privateListener,
-  const json& iceParameters,
-  const json& iceCandidates,
-  const json& dtlsParameters,
-  const PeerConnection::Options* peerConnectionOptions,
-  const json& sendingRtpParametersByKind,
-  const json& sendingRemoteRtpParametersByKind)
-  : Handler(privateListener, iceParameters, iceCandidates, dtlsParameters, peerConnectionOptions)
-{
-	MSC_TRACE();
-
-	this->sendingRtpParametersByKind = sendingRtpParametersByKind;
-
-	this->sendingRemoteRtpParametersByKind = sendingRemoteRtpParametersByKind;
-};
-
-std::pair<std::string, nlohmann::json> SendHandler::Send(
-  webrtc::MediaStreamTrackInterface* track,
-  const std::vector<webrtc::RtpEncodingParameters>* encodings,
-  const json* codecOptions)
-{
-	MSC_TRACE();
-
-	// Check if the track is a null pointer.
-	if (track == nullptr)
-		throw Exception("track cannot be null");
-
-	MSC_DEBUG("[kind:%s, track.id:%s]", track->kind().c_str(), track->id().c_str());
-
-	// https://bugs.chromium.org/p/webrtc/issues/detail?id=7600
-	// Once the issue is solved, no SDP will be required to enable simulcast.
-	webrtc::RtpTransceiverInterface* transceiver = this->pc->AddTransceiver(track);
-
-	if (transceiver == nullptr)
-		throw Exception("error creating transceiver");
-
-	transceiver->SetDirection(webrtc::RtpTransceiverDirection::kSendOnly);
-
-	std::string offer;
-	std::string localId;
-	json& sendingRtpParameters = this->sendingRtpParametersByKind[track->kind()];
-
-	try
-	{
 		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
 
-		offer               = this->pc->CreateOffer(options);
-		auto localSdpObject = sdptransform::parse(offer);
+		// May throw.
+		auto offer                 = pc->CreateOffer(options);
+		auto sdpObject             = sdptransform::parse(offer);
+		auto nativeRtpCapabilities = Sdp::Utils::extractRtpCapabilities(sdpObject);
 
-		// Transport is not ready.
-		if (!this->transportReady)
-			this->SetupTransport("server", localSdpObject);
+		return nativeRtpCapabilities;
+	}
 
-		if (encodings != nullptr && encodings->size() > 1)
+	json Handler::GetNativeSctpCapabilities()
+	{
+		MSC_TRACE();
+
+		json caps = { { "numStreams", SctpNumStreams } };
+
+		return caps;
+	}
+
+	/* Handler instance methods. */
+
+	Handler::Handler(
+	  PrivateListener* privateListener,
+	  const json& iceParameters,
+	  const json& iceCandidates,
+	  const json& dtlsParameters,
+	  const json& sctpParameters,
+	  const PeerConnection::Options* peerConnectionOptions)
+	  : privateListener(privateListener)
+	{
+		MSC_TRACE();
+
+		this->pc.reset(new PeerConnection(this, peerConnectionOptions));
+
+		this->remoteSdp.reset(
+		  new Sdp::RemoteSdp(iceParameters, iceCandidates, dtlsParameters, sctpParameters));
+	};
+
+	void Handler::Close()
+	{
+		MSC_TRACE();
+
+		this->pc->Close();
+	};
+
+	json Handler::GetTransportStats()
+	{
+		MSC_TRACE();
+
+		return this->pc->GetStats();
+	}
+
+	void Handler::UpdateIceServers(const json& iceServerUris)
+	{
+		MSC_TRACE();
+
+		auto configuration = this->pc->GetConfiguration();
+
+		configuration.servers.clear();
+
+		for (const auto& iceServerUri : iceServerUris)
 		{
-			MSC_DEBUG("enabling legacy simulcast");
-
-			// We know that our media section is the last one.
-			auto numMediaSection   = localSdpObject["media"].size();
-			json& offerMediaObject = localSdpObject["media"][numMediaSection - 1];
-
-			Sdp::Utils::addLegacySimulcast(offerMediaObject, encodings->size());
-
-			offer = sdptransform::write(localSdpObject);
+			webrtc::PeerConnectionInterface::IceServer iceServer;
+			if (iceServerUri.is_string())
+			{
+				iceServer.uri = iceServerUri.dump();
+				configuration.servers.push_back(iceServer);
+			}
+			/*iceServer.uri = iceServerUri.dump();
+			configuration.servers.push_back(iceServer);*/
 		}
 
-		MSC_DEBUG("calling pc->SetLocalDescription() [offer:%s]", offer.c_str());
+		if (this->pc->SetConfiguration(configuration))
+			return;
 
-		this->pc->SetLocalDescription(PeerConnection::SdpType::OFFER, offer);
+		MSC_THROW_ERROR("failed to update ICE servers");
+	};
 
-		// We can now get the transceiver.mid.
-		localId = transceiver->mid().value();
-
-		// Set MID.
-		sendingRtpParameters["mid"] = localId;
-	}
-	catch (Exception& )
+	void Handler::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState newState)
 	{
-		// Panic here. Try to undo things.
-		transceiver->SetDirection(webrtc::RtpTransceiverDirection::kInactive);
-		transceiver->sender()->SetTrack(nullptr);
+		MSC_TRACE();
 
-		throw;
+		return this->privateListener->OnConnectionStateChange(newState);
 	}
 
-	auto localSdp       = this->pc->GetLocalDescription();
-	auto localSdpObject = sdptransform::parse(localSdp);
-
-	// We know that our media section is the last one.
-	auto numMediaSection   = localSdpObject["media"].size();
-	json& offerMediaObject = localSdpObject["media"][numMediaSection - 1];
-
-	// Set RTCP CNAME.
-	try
+	void Handler::SetupTransport(const std::string& localDtlsRole, json& localSdpObject)
 	{
+		MSC_TRACE();
+
+		if (localSdpObject.empty())
+			localSdpObject = sdptransform::parse(this->pc->GetLocalDescription());
+
+		// Get our local DTLS parameters.
+		auto dtlsParameters = Sdp::Utils::extractDtlsParameters(localSdpObject);
+
+		// Set our DTLS role.
+		dtlsParameters["role"] = localDtlsRole;
+
+		// Update the remote DTLS role in the SDP.
+		std::string remoteDtlsRole = localDtlsRole == "client" ? "server" : "client";
+		this->remoteSdp->UpdateDtlsRole(remoteDtlsRole);
+
+		// May throw.
+		this->privateListener->OnConnect(dtlsParameters);
+		this->transportReady = true;
+	};
+
+	/* SendHandler instance methods. */
+
+	SendHandler::SendHandler(
+	  Handler::PrivateListener* privateListener,
+	  const json& iceParameters,
+	  const json& iceCandidates,
+	  const json& dtlsParameters,
+	  const json& sctpParameters,
+	  const PeerConnection::Options* peerConnectionOptions,
+	  const json& sendingRtpParametersByKind,
+	  const json& sendingRemoteRtpParametersByKind)
+	  : Handler(
+	      privateListener, iceParameters, iceCandidates, dtlsParameters, sctpParameters, peerConnectionOptions)
+	{
+		MSC_TRACE();
+
+		this->sendingRtpParametersByKind = sendingRtpParametersByKind;
+
+		this->sendingRemoteRtpParametersByKind = sendingRemoteRtpParametersByKind;
+	};
+
+	SendHandler::SendResult SendHandler::Send(
+	  webrtc::MediaStreamTrackInterface* track,
+	  std::vector<webrtc::RtpEncodingParameters>* encodings,
+	  const json* codecOptions)
+	{
+		MSC_TRACE();
+
+		// Check if the track is a null pointer.
+		if (!track)
+			MSC_THROW_TYPE_ERROR("missing track");
+
+		MSC_DEBUG("[kind:%s, track->id():%s]", track->kind().c_str(), track->id().c_str());
+
+		if (encodings && encodings->size() > 1)
+		{
+			uint8_t idx = 0;
+			for (webrtc::RtpEncodingParameters& encoding : *encodings)
+			{
+				encoding.rid = std::string("r").append(std::to_string(idx++));
+			}
+		}
+
+		const Sdp::RemoteSdp::MediaSectionIdx mediaSectionIdx = this->remoteSdp->GetNextMediaSectionIdx();
+
+		webrtc::RtpTransceiverInit transceiverInit;
+
+		if (encodings && !encodings->empty())
+			transceiverInit.send_encodings = *encodings;
+
+		webrtc::RtpTransceiverInterface* transceiver = this->pc->AddTransceiver(track, transceiverInit);
+
+		if (!transceiver)
+			MSC_THROW_ERROR("error creating transceiver");
+
+		transceiver->SetDirection(webrtc::RtpTransceiverDirection::kSendOnly);
+
+		std::string offer;
+		std::string localId;
+		json& sendingRtpParameters = this->sendingRtpParametersByKind[track->kind()];
+
+		try
+		{
+			webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
+
+			offer               = this->pc->CreateOffer(options);
+			auto localSdpObject = sdptransform::parse(offer);
+
+			// Transport is not ready.
+			if (!this->transportReady)
+				this->SetupTransport("server", localSdpObject);
+
+			MSC_DEBUG("calling pc->SetLocalDescription():\n%s", offer.c_str());
+
+			this->pc->SetLocalDescription(PeerConnection::SdpType::OFFER, offer);
+
+			// We can now get the transceiver.mid.
+			localId = transceiver->mid().value();
+
+			// Set MID.
+			sendingRtpParameters["mid"] = localId;
+		}
+		catch (std::exception& error)
+		{
+			// Panic here. Try to undo things.
+			transceiver->SetDirection(webrtc::RtpTransceiverDirection::kInactive);
+			transceiver->sender()->SetTrack(nullptr);
+
+			throw;
+		}
+
+		auto localSdp       = this->pc->GetLocalDescription();
+		auto localSdpObject = sdptransform::parse(localSdp);
+
+		json& offerMediaObject = localSdpObject["media"][mediaSectionIdx.idx];
+
+		// Set RTCP CNAME.
 		sendingRtpParameters["rtcp"]["cname"] = Sdp::Utils::getCname(offerMediaObject);
 
-		// Set RTP encodings.
-		sendingRtpParameters["encodings"] = Sdp::Utils::getRtpEncodings(offerMediaObject);
+		// Set RTP encodings by parsing the SDP offer if no encodings are given.
+		if (encodings == nullptr || encodings->empty())
+		{
+			sendingRtpParameters["encodings"] = Sdp::Utils::getRtpEncodings(offerMediaObject);
+		}
+		// Set RTP encodings by parsing the SDP offer and complete them with given
+		// one if just a single encoding has been given.
+		else if (encodings->size() == 1)
+		{
+			auto newEncodings = Sdp::Utils::getRtpEncodings(offerMediaObject);
+
+			fillJsonRtpEncodingParameters(newEncodings.front(), encodings->front());
+			sendingRtpParameters["encodings"] = newEncodings;
+		}
+
+		// Otherwise if more than 1 encoding are given use them verbatim.
+		else
+		{
+			sendingRtpParameters["encodings"] = json::array();
+
+			for (const auto& encoding : *encodings)
+			{
+				json jsonEncoding = {};
+
+				fillJsonRtpEncodingParameters(jsonEncoding, encoding);
+				sendingRtpParameters["encodings"].push_back(jsonEncoding);
+			}
+		}
 
 		// If VP8 and there is effective simulcast, add scalabilityMode to each encoding.
 		auto mimeType = sendingRtpParameters["codecs"][0]["mimeType"].get<std::string>();
@@ -228,233 +291,336 @@ std::pair<std::string, nlohmann::json> SendHandler::Send(
 
 		this->remoteSdp->Send(
 		  offerMediaObject,
+		  mediaSectionIdx.reuseMid,
 		  sendingRtpParameters,
 		  this->sendingRemoteRtpParametersByKind[track->kind()],
 		  codecOptions);
 
 		auto answer = this->remoteSdp->GetSdp();
 
-		MSC_DEBUG("calling pc->SetRemoteDescription() [answer:%s]", answer.c_str());
+		MSC_DEBUG("calling pc->SetRemoteDescription():\n%s", answer.c_str());
 
 		this->pc->SetRemoteDescription(PeerConnection::SdpType::ANSWER, answer);
-	}
-	catch (Exception& )
-	{
-		throw;
-	}
 
-	// Store in the map.
-	this->mapMidTransceiver[localId] = transceiver;
+		// Store in the map.
+		this->mapMidTransceiver[localId] = transceiver;
 
-	return std::make_pair(localId, sendingRtpParameters);
-}
+		SendResult sendResult;
 
-void SendHandler::StopSending(const std::string& localId)
-{
-	MSC_TRACE();
+		sendResult.localId       = localId;
+		sendResult.rtpSender     = transceiver->sender();
+		sendResult.rtpParameters = sendingRtpParameters;
 
-	MSC_DEBUG("[localId:%s]", localId.c_str());
-
-	auto jsonLocaIdIt = this->mapMidTransceiver.find(localId);
-	if (jsonLocaIdIt == this->mapMidTransceiver.end())
-		throw Exception("associated RtpTransceiver not found");
-
-	auto* transceiver = jsonLocaIdIt->second;
-
-	transceiver->sender()->SetTrack(nullptr);
-	this->pc->RemoveTrack(transceiver->sender());
-	this->remoteSdp->DisableMediaSection(transceiver->mid().value());
-
-	// May throw.
-	webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-
-	auto offer = this->pc->CreateOffer(options);
-
-	MSC_DEBUG("calling pc->SetLocalDescription() [offer:%s]", offer.c_str());
-
-	// May throw.
-	this->pc->SetLocalDescription(PeerConnection::SdpType::OFFER, offer);
-
-	auto localSdpObj = sdptransform::parse(this->pc->GetLocalDescription());
-	auto answer      = this->remoteSdp->GetSdp();
-
-	MSC_DEBUG("calling pc->SetRemoteDescription() [answer:%s]", answer.c_str());
-
-	// May throw.
-	this->pc->SetRemoteDescription(PeerConnection::SdpType::ANSWER, answer);
-}
-
-void SendHandler::ReplaceTrack(const std::string& localId, webrtc::MediaStreamTrackInterface* track)
-{
-	MSC_TRACE();
-
-	MSC_DEBUG(
-	  "[localId:%s, track->id():%s]",
-	  localId.c_str(),
-	  track == nullptr ? "nullptr" : track->id().c_str());
-
-	auto jsonLocalIdIt = this->mapMidTransceiver.find(localId);
-	if (jsonLocalIdIt == this->mapMidTransceiver.end())
-		throw Exception("associated RtpTransceiver not found");
-
-	auto* transceiver = jsonLocalIdIt->second;
-
-	transceiver->sender()->SetTrack(track);
-}
-
-void SendHandler::SetMaxSpatialLayer(const std::string& localId, uint8_t spatialLayer)
-{
-	MSC_TRACE();
-
-	MSC_DEBUG("[localId:%s, spatialLayer:%d]", localId.c_str(), spatialLayer);
-
-	auto jsonLocalIdIt = this->mapMidTransceiver.find(localId);
-	if (jsonLocalIdIt == this->mapMidTransceiver.end())
-		throw Exception("associated RtpTransceiver not found");
-
-	auto* transceiver = jsonLocalIdIt->second;
-	auto parameters   = transceiver->sender()->GetParameters();
-
-	bool hasLowEncoding{ false }, hasMediumEncoding{ false }, hasHighEncoding{ false };
-	webrtc::RtpEncodingParameters *lowEncoding, *mediumEncoding, *highEncoding;
-
-	if (!parameters.encodings.empty())
-	{
-		hasLowEncoding = true;
-		lowEncoding    = &parameters.encodings[0];
+		return sendResult;
 	}
 
-	if (parameters.encodings.size() > 1)
+	Handler::DataChannel SendHandler::SendDataChannel(
+	  const std::string& label, webrtc::DataChannelInit dataChannelInit)
 	{
-		hasMediumEncoding = true;
-		mediumEncoding    = &parameters.encodings[1];
+		MSC_TRACE();
+
+		uint16_t streamId = this->nextSendSctpStreamId;
+
+		dataChannelInit.negotiated = true;
+		dataChannelInit.id         = streamId;
+
+		/* clang-format off */
+		json sctpStreamParameters =
+		{
+			{ "streamId", streamId                  },
+			{ "ordered",  dataChannelInit.ordered   },
+			{ "protocol", dataChannelInit.protocol  }
+		};
+		/* clang-format on */
+
+		if (dataChannelInit.maxRetransmitTime.has_value())
+		{
+			sctpStreamParameters["maxPacketLifeTime"] = dataChannelInit.maxRetransmitTime.value();
+		}
+
+		if (dataChannelInit.maxRetransmits.has_value())
+		{
+			sctpStreamParameters["maxRetransmits"] = dataChannelInit.maxRetransmits.value();
+		}
+
+		// This will fill sctpStreamParameters's missing fields with default values.
+		ortc::validateSctpStreamParameters(sctpStreamParameters);
+
+		rtc::scoped_refptr<webrtc::DataChannelInterface> webrtcDataChannel =
+		  this->pc->CreateDataChannel(label, &dataChannelInit);
+
+		// Increase next id.
+		this->nextSendSctpStreamId = (this->nextSendSctpStreamId + 1) % SctpNumStreamsMis;
+
+		// If this is the first DataChannel we need to create the SDP answer with
+		// m=application section.
+		if (!this->hasDataChannelMediaSection)
+		{
+			webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
+			std::string offer   = this->pc->CreateOffer(options);
+			auto localSdpObject = sdptransform::parse(offer);
+			const Sdp::RemoteSdp::MediaSectionIdx mediaSectionIdx =
+			  this->remoteSdp->GetNextMediaSectionIdx();
+
+			auto offerMediaObject =
+			  find_if(localSdpObject["media"].begin(), localSdpObject["media"].end(), [](const json& m) {
+				  return m.at("type").get<std::string>() == "application";
+			  });
+
+			if (offerMediaObject == localSdpObject["media"].end())
+			{
+				MSC_THROW_ERROR("Missing 'application' media section in SDP offer");
+			}
+
+			if (!this->transportReady)
+			{
+				this->SetupTransport("server", localSdpObject);
+			}
+
+			MSC_DEBUG("calling pc.setLocalDescription() [offer:%s]", offer.c_str());
+
+			this->pc->SetLocalDescription(PeerConnection::SdpType::OFFER, offer);
+			this->remoteSdp->SendSctpAssociation(*offerMediaObject);
+
+			auto sdpAnswer = this->remoteSdp->GetSdp();
+
+			MSC_DEBUG("calling pc.setRemoteDescription() [answer:%s]", sdpAnswer.c_str());
+
+			this->pc->SetRemoteDescription(PeerConnection::SdpType::ANSWER, sdpAnswer);
+			this->hasDataChannelMediaSection = true;
+		}
+
+		SendHandler::DataChannel dataChannel;
+
+		dataChannel.localId              = std::to_string(streamId);
+		dataChannel.dataChannel          = webrtcDataChannel;
+		dataChannel.sctpStreamParameters = sctpStreamParameters;
+
+		return dataChannel;
 	}
 
-	if (parameters.encodings.size() > 2)
+	void SendHandler::StopSending(const std::string& localId)
 	{
-		hasHighEncoding = true;
-		highEncoding    = &parameters.encodings[2];
+		MSC_TRACE();
+
+		MSC_DEBUG("[localId:%s]", localId.c_str());
+
+		auto locaIdIt = this->mapMidTransceiver.find(localId);
+
+		if (locaIdIt == this->mapMidTransceiver.end())
+			MSC_THROW_ERROR("associated RtpTransceiver not found");
+
+		auto* transceiver = locaIdIt->second;
+
+		transceiver->sender()->SetTrack(nullptr);
+		this->pc->RemoveTrack(transceiver->sender());
+		this->remoteSdp->CloseMediaSection(transceiver->mid().value());
+
+		// May throw.
+		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
+
+		auto offer = this->pc->CreateOffer(options);
+
+		MSC_DEBUG("calling pc->SetLocalDescription():\n%s", offer.c_str());
+
+		// May throw.
+		this->pc->SetLocalDescription(PeerConnection::SdpType::OFFER, offer);
+
+		auto localSdpObj = sdptransform::parse(this->pc->GetLocalDescription());
+		auto answer      = this->remoteSdp->GetSdp();
+
+		MSC_DEBUG("calling pc->SetRemoteDescription():\n%s", answer.c_str());
+
+		// May throw.
+		this->pc->SetRemoteDescription(PeerConnection::SdpType::ANSWER, answer);
 	}
 
-	// Edit encodings.
-	if (spatialLayer == 1u)
+	void SendHandler::ReplaceTrack(const std::string& localId, webrtc::MediaStreamTrackInterface* track)
 	{
-		hasLowEncoding && (lowEncoding->active = true);
-		hasMediumEncoding && (mediumEncoding->active = false);
-		hasHighEncoding && (highEncoding->active = false);
+		MSC_TRACE();
+
+		MSC_DEBUG(
+		  "[localId:%s, track->id():%s]",
+		  localId.c_str(),
+		  track == nullptr ? "nullptr" : track->id().c_str());
+
+		auto localIdIt = this->mapMidTransceiver.find(localId);
+
+		if (localIdIt == this->mapMidTransceiver.end())
+			MSC_THROW_ERROR("associated RtpTransceiver not found");
+
+		auto* transceiver = localIdIt->second;
+
+		transceiver->sender()->SetTrack(track);
 	}
 
-	else if (spatialLayer == 2u)
+	void SendHandler::SetMaxSpatialLayer(const std::string& localId, uint8_t spatialLayer)
 	{
-		hasLowEncoding && (lowEncoding->active = true);
-		hasMediumEncoding && (mediumEncoding->active = true);
-		hasHighEncoding && (highEncoding->active = false);
+		MSC_TRACE();
+
+		MSC_DEBUG("[localId:%s, spatialLayer:%" PRIu8 "]", localId.c_str(), spatialLayer);
+
+		auto localIdIt = this->mapMidTransceiver.find(localId);
+
+		if (localIdIt == this->mapMidTransceiver.end())
+			MSC_THROW_ERROR("associated RtpTransceiver not found");
+
+		auto* transceiver = localIdIt->second;
+		auto parameters   = transceiver->sender()->GetParameters();
+
+		bool hasLowEncoding{ false };
+		bool hasMediumEncoding{ false };
+		bool hasHighEncoding{ false };
+		webrtc::RtpEncodingParameters* lowEncoding{ nullptr };
+		webrtc::RtpEncodingParameters* mediumEncoding{ nullptr };
+		webrtc::RtpEncodingParameters* highEncoding{ nullptr };
+
+		if (!parameters.encodings.empty())
+		{
+			hasLowEncoding = true;
+			lowEncoding    = &parameters.encodings[0];
+		}
+
+		if (parameters.encodings.size() > 1)
+		{
+			hasMediumEncoding = true;
+			mediumEncoding    = &parameters.encodings[1];
+		}
+
+		if (parameters.encodings.size() > 2)
+		{
+			hasHighEncoding = true;
+			highEncoding    = &parameters.encodings[2];
+		}
+
+		// Edit encodings.
+		if (spatialLayer == 1u)
+		{
+			hasLowEncoding && (lowEncoding->active = true);
+			hasMediumEncoding && (mediumEncoding->active = false);
+			hasHighEncoding && (highEncoding->active = false);
+		}
+
+		else if (spatialLayer == 2u)
+		{
+			hasLowEncoding && (lowEncoding->active = true);
+			hasMediumEncoding && (mediumEncoding->active = true);
+			hasHighEncoding && (highEncoding->active = false);
+		}
+
+		else if (spatialLayer == 3u)
+		{
+			hasLowEncoding && (lowEncoding->active = true);
+			hasMediumEncoding && (mediumEncoding->active = true);
+			hasHighEncoding && (highEncoding->active = true);
+		}
+
+		auto result = transceiver->sender()->SetParameters(parameters);
+
+		if (!result.ok())
+			MSC_THROW_ERROR("%s", result.message());
 	}
 
-	else if (spatialLayer == 3u)
+	json SendHandler::GetSenderStats(const std::string& localId)
 	{
-		hasLowEncoding && (lowEncoding->active = true);
-		hasMediumEncoding && (mediumEncoding->active = true);
-		hasHighEncoding && (highEncoding->active = true);
+		MSC_TRACE();
+
+		MSC_DEBUG("[localId:%s]", localId.c_str());
+
+		auto localIdIt = this->mapMidTransceiver.find(localId);
+
+		if (localIdIt == this->mapMidTransceiver.end())
+			MSC_THROW_ERROR("associated RtpTransceiver not found");
+
+		auto* transceiver = localIdIt->second;
+		auto stats        = this->pc->GetStats(transceiver->sender());
+
+		return stats;
 	}
 
-	auto result = transceiver->sender()->SetParameters(parameters);
-	if (!result.ok())
-		throw Exception(result.message());
-}
-
-json SendHandler::GetSenderStats(const std::string& localId)
-{
-	MSC_TRACE();
-
-	MSC_DEBUG("[localId:%s]", localId.c_str());
-
-	auto jsonLocalIdIt = this->mapMidTransceiver.find(localId);
-	if (jsonLocalIdIt == this->mapMidTransceiver.end())
-		throw Exception("associated RtpTransceiver not found");
-
-	auto* transceiver = jsonLocalIdIt->second;
-	auto stats        = this->pc->GetStats(transceiver->sender());
-
-	return stats;
-}
-
-void SendHandler::RestartIce(const json& iceParameters)
-{
-	MSC_TRACE();
-
-	// Provide the remote SDP handler with new remote ICE parameters.
-	this->remoteSdp->UpdateIceParameters(iceParameters);
-
-	if (!this->transportReady)
-		return;
-
-	webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-	options.ice_restart = true;
-
-	// May throw.
-	auto offer = this->pc->CreateOffer(options);
-
-	MSC_DEBUG("calling pc->SetLocalDescription() [offer:%s]", offer.c_str());
-
-	// May throw.
-	this->pc->SetLocalDescription(PeerConnection::SdpType::OFFER, offer);
-
-	auto localSdpObj = sdptransform::parse(this->pc->GetLocalDescription());
-	auto answer      = this->remoteSdp->GetSdp();
-
-	MSC_DEBUG("calling pc->SetRemoteDescription() [answer:%s]", answer.c_str());
-
-	// May throw.
-	this->pc->SetRemoteDescription(PeerConnection::SdpType::ANSWER, answer);
-}
-
-/* RecvHandler methods */
-
-RecvHandler::RecvHandler(
-  Handler::PrivateListener* privateListener,
-  const json& iceParameters,
-  const json& iceCandidates,
-  const json& dtlsParameters,
-  const PeerConnection::Options* peerConnectionOptions)
-  : Handler(privateListener, iceParameters, iceCandidates, dtlsParameters, peerConnectionOptions)
-{
-	MSC_TRACE();
-};
-
-std::pair<std::string, webrtc::MediaStreamTrackInterface*> RecvHandler::Receive(
-  const std::string& id, const std::string& kind, const json* rtpParameters)
-{
-	MSC_TRACE();
-
-	MSC_DEBUG("[id:%s, kind:%s]", id.c_str(), kind.c_str());
-
-	auto localId  = std::to_string(this->nextMid);
-	auto& cname   = (*rtpParameters)["rtcp"]["cname"];
-
-	this->remoteSdp->Receive(localId, kind, *rtpParameters, cname, id);
-
-	auto offer = this->remoteSdp->GetSdp();
-
-	MSC_DEBUG("calling pc->setRemoteDescription() [offer:%s]", offer.c_str());
-
-	try
+	void SendHandler::RestartIce(const json& iceParameters)
 	{
+		MSC_TRACE();
+
+		// Provide the remote SDP handler with new remote ICE parameters.
+		this->remoteSdp->UpdateIceParameters(iceParameters);
+
+		if (!this->transportReady)
+			return;
+
+		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
+		options.ice_restart = true;
+
+		// May throw.
+		auto offer = this->pc->CreateOffer(options);
+
+		MSC_DEBUG("calling pc->SetLocalDescription():\n%s", offer.c_str());
+
+		// May throw.
+		this->pc->SetLocalDescription(PeerConnection::SdpType::OFFER, offer);
+
+		auto localSdpObj = sdptransform::parse(this->pc->GetLocalDescription());
+		auto answer      = this->remoteSdp->GetSdp();
+
+		MSC_DEBUG("calling pc->SetRemoteDescription():\n%s", answer.c_str());
+
+		// May throw.
+		this->pc->SetRemoteDescription(PeerConnection::SdpType::ANSWER, answer);
+	}
+
+	/* RecvHandler methods */
+
+	RecvHandler::RecvHandler(
+	  Handler::PrivateListener* privateListener,
+	  const json& iceParameters,
+	  const json& iceCandidates,
+	  const json& dtlsParameters,
+	  const json& sctpParameters,
+	  const PeerConnection::Options* peerConnectionOptions)
+	  : Handler(
+	      privateListener, iceParameters, iceCandidates, dtlsParameters, sctpParameters, peerConnectionOptions)
+	{
+		MSC_TRACE();
+	};
+
+	RecvHandler::RecvResult RecvHandler::Receive(
+	  const std::string& id, const std::string& kind, const json* rtpParameters)
+	{
+		MSC_TRACE();
+
+		MSC_DEBUG("[id:%s, kind:%s]", id.c_str(), kind.c_str());
+
+		std::string localId;
+
+		// mid is optional, check whether it exists and is a non empty string.
+		auto midIt = rtpParameters->find("mid");
+		if (midIt != rtpParameters->end() && (midIt->is_string() && !midIt->get<std::string>().empty()))
+			localId = midIt->get<std::string>();
+		else
+			localId = std::to_string(this->mapMidTransceiver.size());
+
+		const auto& cname = (*rtpParameters)["rtcp"]["cname"];
+
+		this->remoteSdp->Receive(localId, kind, *rtpParameters, cname, id);
+
+		auto offer = this->remoteSdp->GetSdp();
+
+		MSC_DEBUG("calling pc->setRemoteDescription():\n%s", offer.c_str());
+
 		// May throw.
 		this->pc->SetRemoteDescription(PeerConnection::SdpType::OFFER, offer);
 
 		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
 
 		// May throw.
-		auto answer = this->pc->CreateAnswer(options);
-
+		auto answer         = this->pc->CreateAnswer(options);
 		auto localSdpObject = sdptransform::parse(answer);
-		auto jsonMediaIt    = find_if(
+		auto mediaIt        = find_if(
       localSdpObject["media"].begin(), localSdpObject["media"].end(), [&localId](const json& m) {
         return m["mid"].get<std::string>() == localId;
       });
 
-		auto& answerMediaObject = *jsonMediaIt;
+		auto& answerMediaObject = *mediaIt;
 
 		// May need to modify codec parameters in the answer based on codec
 		// parameters in the offer.
@@ -465,113 +631,201 @@ std::pair<std::string, webrtc::MediaStreamTrackInterface*> RecvHandler::Receive(
 		if (!this->transportReady)
 			this->SetupTransport("client", localSdpObject);
 
-		MSC_DEBUG("calling pc->SetLocalDescription() [answer:%s]", answer.c_str());
+		MSC_DEBUG("calling pc->SetLocalDescription():\n%s", answer.c_str());
+
+		// May throw.
+		this->pc->SetLocalDescription(PeerConnection::SdpType::ANSWER, answer);
+
+		auto transceivers  = this->pc->GetTransceivers();
+		auto transceiverIt = std::find_if(
+		  transceivers.begin(), transceivers.end(), [&localId](webrtc::RtpTransceiverInterface* t) {
+			  return t->mid() == localId;
+		  });
+
+		if (transceiverIt == transceivers.end())
+			MSC_THROW_ERROR("new RTCRtpTransceiver not found");
+
+		auto& transceiver = *transceiverIt;
+
+		// Store in the map.
+		this->mapMidTransceiver[localId] = transceiver;
+
+		RecvResult recvResult;
+
+		recvResult.localId     = localId;
+		recvResult.rtpReceiver = transceiver->receiver();
+		recvResult.track       = transceiver->receiver()->track();
+
+		return recvResult;
+	}
+
+	Handler::DataChannel RecvHandler::ReceiveDataChannel(
+	  const std::string& label, webrtc::DataChannelInit dataChannelInit)
+	{
+		MSC_TRACE();
+
+		uint16_t streamId = this->nextSendSctpStreamId;
+
+		dataChannelInit.negotiated = true;
+		dataChannelInit.id         = streamId;
+
+		/* clang-format off */
+		nlohmann::json sctpStreamParameters =
+		{
+			{ "streamId", streamId                },
+			{ "ordered",  dataChannelInit.ordered }
+		};
+		/* clang-format on */
+
+		// This will fill sctpStreamParameters's missing fields with default values.
+		ortc::validateSctpStreamParameters(sctpStreamParameters);
+
+		rtc::scoped_refptr<webrtc::DataChannelInterface> webrtcDataChannel =
+		  this->pc->CreateDataChannel(label, &dataChannelInit);
+
+		// Increase next id.
+		this->nextSendSctpStreamId = (this->nextSendSctpStreamId + 1) % SctpNumStreamsMis;
+
+		// If this is the first DataChannel we need to create the SDP answer with
+		// m=application section.
+		if (!this->hasDataChannelMediaSection)
+		{
+			this->remoteSdp->RecvSctpAssociation();
+			auto sdpOffer = this->remoteSdp->GetSdp();
+
+			MSC_DEBUG("calling pc->setRemoteDescription() [offer:%s]", sdpOffer.c_str());
+
+			// May throw.
+			this->pc->SetRemoteDescription(PeerConnection::SdpType::OFFER, sdpOffer);
+
+			webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
+			auto sdpAnswer = this->pc->CreateAnswer(options);
+
+			if (!this->transportReady)
+			{
+				auto localSdpObject = sdptransform::parse(sdpAnswer);
+				this->SetupTransport("client", localSdpObject);
+			}
+
+			MSC_DEBUG("calling pc->setLocalDescription() [answer: %s]", sdpAnswer.c_str());
+
+			// May throw.
+			this->pc->SetLocalDescription(PeerConnection::SdpType::ANSWER, sdpAnswer);
+
+			this->hasDataChannelMediaSection = true;
+		}
+
+		RecvHandler::DataChannel dataChannel;
+
+		dataChannel.localId              = std::to_string(streamId);
+		dataChannel.dataChannel          = webrtcDataChannel;
+		dataChannel.sctpStreamParameters = sctpStreamParameters;
+
+		return dataChannel;
+	}
+
+	void RecvHandler::StopReceiving(const std::string& localId)
+	{
+		MSC_TRACE();
+
+		MSC_DEBUG("[localId:%s]", localId.c_str());
+
+		auto localIdIt = this->mapMidTransceiver.find(localId);
+
+		if (localIdIt == this->mapMidTransceiver.end())
+			MSC_THROW_ERROR("associated RtpTransceiver not found");
+
+		auto& transceiver = localIdIt->second;
+
+		MSC_DEBUG("disabling mid:%s", transceiver->mid().value().c_str());
+
+		this->remoteSdp->CloseMediaSection(transceiver->mid().value());
+
+		auto offer = this->remoteSdp->GetSdp();
+
+		MSC_DEBUG("calling pc->setRemoteDescription():\n%s", offer.c_str());
+
+		// May throw.
+		this->pc->SetRemoteDescription(PeerConnection::SdpType::OFFER, offer);
+
+		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
+
+		// May throw.
+		auto answer = this->pc->CreateAnswer(options);
+
+		MSC_DEBUG("calling pc->SetLocalDescription():\n%s", answer.c_str());
 
 		// May throw.
 		this->pc->SetLocalDescription(PeerConnection::SdpType::ANSWER, answer);
 	}
-	catch (Exception& )
+
+	json RecvHandler::GetReceiverStats(const std::string& localId)
 	{
-		throw;
+		MSC_TRACE();
+
+		MSC_DEBUG("[localId:%s]", localId.c_str());
+
+		auto localIdIt = this->mapMidTransceiver.find(localId);
+
+		if (localIdIt == this->mapMidTransceiver.end())
+			MSC_THROW_ERROR("associated RtpTransceiver not found");
+
+		auto& transceiver = localIdIt->second;
+
+		// May throw.
+		auto stats = this->pc->GetStats(transceiver->receiver());
+
+		return stats;
 	}
 
-	auto transceivers  = this->pc->GetTransceivers();
-	auto transceiverIt = std::find_if(
-	  transceivers.begin(), transceivers.end(), [&localId](webrtc::RtpTransceiverInterface* t) {
-		  return t->mid() == localId;
-	  });
+	void RecvHandler::RestartIce(const json& iceParameters)
+	{
+		MSC_TRACE();
 
-	if (transceiverIt == transceivers.end())
-		throw Exception("new RTCRtpTransceiver not found");
+		// Provide the remote SDP handler with new remote ICE parameters.
+		this->remoteSdp->UpdateIceParameters(iceParameters);
 
-	auto& transceiver = *transceiverIt;
+		if (!this->transportReady)
+			return;
 
-	// Store in the map.
-	this->mapMidTransceiver[localId] = transceiver;
+		auto offer = this->remoteSdp->GetSdp();
 
-	// Increase next MID.
-	this->nextMid++;
+		MSC_DEBUG("calling pc->setRemoteDescription():\n%s", offer.c_str());
 
-	return std::make_pair(localId, transceiver->receiver()->track());
-}
+		// May throw.
+		this->pc->SetRemoteDescription(PeerConnection::SdpType::OFFER, offer);
 
-void RecvHandler::StopReceiving(const std::string& localId)
-{
-	MSC_TRACE();
+		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
 
-	MSC_DEBUG("[localId:%s]", localId.c_str());
+		// May throw.
+		auto answer = this->pc->CreateAnswer(options);
 
-	auto jsonLocalIdIt = this->mapMidTransceiver.find(localId);
-	if (jsonLocalIdIt == this->mapMidTransceiver.end())
-		throw Exception("associated RtpTransceiver not found");
+		MSC_DEBUG("calling pc->SetLocalDescription():\n%s", answer.c_str());
 
-	auto& transceiver = jsonLocalIdIt->second;
-
-	MSC_DEBUG("disabling mid:%s", transceiver->mid().value().c_str());
-
-	this->remoteSdp->DisableMediaSection(transceiver->mid().value());
-
-	auto offer = this->remoteSdp->GetSdp();
-
-	MSC_DEBUG("calling pc->setRemoteDescription() [offer:%s]", offer.c_str());
-
-	// May throw.
-	this->pc->SetRemoteDescription(PeerConnection::SdpType::OFFER, offer);
-
-	webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-
-	// May throw.
-	auto answer = this->pc->CreateAnswer(options);
-
-	MSC_DEBUG("calling pc->SetLocalDescription() [answer:%s]", answer.c_str());
-
-	// May throw.
-	this->pc->SetLocalDescription(PeerConnection::SdpType::ANSWER, answer);
-}
-
-json RecvHandler::GetReceiverStats(const std::string& localId)
-{
-	MSC_TRACE();
-
-	MSC_DEBUG("[localId:%s]", localId.c_str());
-
-	auto jsonLocalIdIt = this->mapMidTransceiver.find(localId);
-	if (jsonLocalIdIt == this->mapMidTransceiver.end())
-		throw Exception("associated RtpTransceiver not found");
-
-	auto& transceiver = jsonLocalIdIt->second;
-
-	// May throw.
-	auto stats = this->pc->GetStats(transceiver->receiver());
-
-	return stats;
-}
-
-void RecvHandler::RestartIce(const json& iceParameters)
-{
-	MSC_TRACE();
-
-	// Provide the remote SDP handler with new remote ICE parameters.
-	this->remoteSdp->UpdateIceParameters(iceParameters);
-
-	if (!this->transportReady)
-		return;
-
-	auto offer = this->remoteSdp->GetSdp();
-
-	MSC_DEBUG("calling pc->setRemoteDescription() [offer:%s]", offer.c_str());
-
-	// May throw.
-	this->pc->SetRemoteDescription(PeerConnection::SdpType::OFFER, offer);
-
-	webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-
-	// May throw.
-	auto answer = this->pc->CreateAnswer(options);
-
-	MSC_DEBUG("calling pc->SetLocalDescription() [answer:%s]", answer.c_str());
-
-	// May throw.
-	this->pc->SetLocalDescription(PeerConnection::SdpType::ANSWER, answer);
-}
+		// May throw.
+		this->pc->SetLocalDescription(PeerConnection::SdpType::ANSWER, answer);
+	}
 } // namespace mediasoupclient
+
+// Private helpers used in this file.
+
+static void fillJsonRtpEncodingParameters(json& jsonEncoding, const webrtc::RtpEncodingParameters& encoding)
+{
+	MSC_TRACE();
+
+	jsonEncoding["active"] = encoding.active;
+
+	if (!encoding.rid.empty())
+		jsonEncoding["rid"] = encoding.rid;
+
+	if (encoding.max_bitrate_bps)
+		jsonEncoding["maxBitrate"] = *encoding.max_bitrate_bps;
+
+	if (encoding.max_framerate)
+		jsonEncoding["maxFramerate"] = *encoding.max_framerate;
+
+	if (encoding.scale_resolution_down_by)
+		jsonEncoding["scaleResolutionDownBy"] = *encoding.scale_resolution_down_by;
+
+	jsonEncoding["networkPriority"] = encoding.network_priority;
+}

@@ -40,6 +40,8 @@
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\src\sdp\Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\DataConsumer.cpp" />
+    <ClCompile Include="..\src\DataProducer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\CMakeLists.txt" />
@@ -48,5 +50,10 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{92AF04AE-B3A4-3F2A-81FA-64B8AFC49089}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\DataConsumer.hpp" />
+    <ClInclude Include="..\src\DataProducer.hpp" />
+    <ClInclude Include="..\src\MediaSoupClientErrors.hpp" />
   </ItemGroup>
 </Project>
