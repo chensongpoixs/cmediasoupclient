@@ -24,6 +24,7 @@
     <ClCompile Include="..\..\test\cconfig.cpp" />
     <ClCompile Include="..\..\test\ccfg.cpp" />
     <ClCompile Include="..\..\test\cnet_types.cpp" />
+    <ClCompile Include="..\..\test\cint2str.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\CMakeLists.txt" />
@@ -42,5 +43,6 @@
     <ClInclude Include="..\..\test\cconfig.h" />
     <ClInclude Include="..\..\test\ccfg.h" />
     <ClInclude Include="..\..\test\cnet_types.h" />
+    <ClInclude Include="..\..\test\cint2str.h" />
   </ItemGroup>
 </Project>

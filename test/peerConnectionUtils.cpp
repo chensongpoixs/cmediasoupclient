@@ -23,6 +23,8 @@ static rtc::scoped_refptr<CapturerTrackSource> videoDevice{ nullptr };
 static rtc::Thread* signalingThread{ nullptr };
 static rtc::Thread* workerThread{ nullptr };
 
+
+
 class CapturerTrackSource : public webrtc::VideoTrackSource
 {
 public:
@@ -48,7 +50,14 @@ public:
 		}
 		return new rtc::RefCountedObject<CapturerTrackSource>(std::move(capturer));*/
 	}
-
+	virtual ~CapturerTrackSource()
+	{
+		capturer->StopCapture();
+	}
+	void stop()
+	{
+		capturer->StopCapture();
+	}
 protected:
 	explicit CapturerTrackSource(std::unique_ptr<DesktopCapture> capturer)
 	  : VideoTrackSource(/*remote=*/false), capturer(std::move(capturer))
@@ -130,4 +139,18 @@ rtc::scoped_refptr<webrtc::VideoTrackInterface> createVideoTrack(const std::stri
 		videoDevice = CapturerTrackSource::Create(); //CapturerTrackSource::Create();
 
 	return peerConnectionFactory->CreateVideoTrack(label, videoDevice);
+}
+
+
+void stopTrack()
+{
+	RTC_LOG(LS_INFO) << "stop Track ....";
+	//CapturerTrackSource* capturer = videoDevice.release();
+	if (videoDevice)
+	{
+		videoDevice->stop();
+		RTC_LOG(LS_INFO) << "stop video ok !!!";
+	}
+
+	RTC_LOG(LS_INFO) << "stop Track ok !!!";
 }

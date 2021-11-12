@@ -319,6 +319,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="..\..\test\ccfg.cpp" />
     <ClCompile Include="..\..\test\cconfig.cpp" />
+    <ClCompile Include="..\..\test\cint2str.cpp" />
     <ClCompile Include="..\..\test\cnet_types.cpp" />
     <ClCompile Include="..\..\test\cwebsocket_mgr.cpp" />
     <ClCompile Include="..\..\test\desktop_capture.cc" />
@@ -350,6 +351,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClInclude Include="..\..\test\ccfg.h" />
     <ClInclude Include="..\..\test\cconfig.h" />
+    <ClInclude Include="..\..\test\cint2str.h" />
     <ClInclude Include="..\..\test\cnet_types.h" />
     <ClInclude Include="..\..\test\cwebsocket_mgr.h" />
     <ClInclude Include="..\..\test\desktop_capture.h" />

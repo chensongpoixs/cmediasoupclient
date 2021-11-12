@@ -10,14 +10,17 @@
 #include "ccfg.h"
 
 using json = nlohmann::json;
-
+Broadcaster broadcaster;
+bool stoped = false;
 void signalHandler(int signum)
 {
 	RTC_LOG(LS_INFO) << "[INFO] interrupt signal (" << signum << ") received";
-
+	webrtc::g_websocket_mgr.destroy();
+	// Remove broadcaster from the server.
+	broadcaster.Stop();
 	RTC_LOG(LS_INFO) << "[INFO] leaving!" ;
-
-	std::exit(signum);
+	stoped = true;
+	//std::exit(signum);
 }
 
 int main(int argc, char* argv[])
@@ -47,10 +50,46 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	webrtc::g_websocket_mgr.start();
-
+	uint64_t id = 34;
+	bool send = false;
 	while (webrtc::g_websocket_mgr.get_status() != webrtc::CWEBSOCKET_MESSAGE)
 	{
-		RTC_LOG(LS_INFO) << "websocket connect .... 100 ";
+		//RTC_LOG(LS_INFO) << "websocket connect .... 100 ";
+		/*{
+		request : true,
+			id      : 12345678,
+			method  : 'chatmessage',
+			data    :
+		{
+		type  : 'text',
+			value : 'Hi there!'
+		}
+		}*/
+
+		json body_data =
+		{
+			{
+				"type", "text"
+			},
+				{
+					"value", "Hi there@@"
+				}
+		};
+		json body =
+		{
+			{ "request" , true },
+			{ "id", ++id},
+			{ "method", "chatmeessage"},
+			{ "data", body_data } 
+			
+		};
+		//RTC_LOG(LS_INFO) << body.dump().c_str();
+		/*if (!send)
+		{
+			webrtc::g_websocket_mgr.send(body.dump().c_str());
+			send = true;
+		}*/
+		
 		std::this_thread::sleep_for(std::chrono::microseconds(100));
 	}
 
@@ -160,15 +199,42 @@ int main(int argc, char* argv[])
 	RTC_LOG(INFO)  << __FUNCTION__ << __LINE__ <<"[" << res->body << "]" ;
 	auto response = nlohmann::json::parse(res->body);
 
-	Broadcaster broadcaster;
+	
 
 	broadcaster.Start(baseUrl, enableAudio, useSimulcast, response, verifySsl, name);
 
 	std::cout << "[INFO] press Ctrl+C or Cmd+C to leave..." << std::endl;
-
-	while (true)
+	std::string new_url  =  url + "/chensong";
+	while (!stoped)
 	{
-		std::cin.get();
+		//broadcaster.createDataConsumer();
+
+		
+		res = cli.Get(new_url.c_str());
+		if (!res)
+		{
+			RTC_LOG(LS_ERROR) << "[ERROR]Stop";
+
+			//	promise.set_exception(std::make_exception_ptr(res->body));
+			//return -1;// promise.get_future();
+		}
+		if (res->status != 200)
+		{
+			RTC_LOG(LS_ERROR)  << "[ERROR] Stop"
+				<< " [status code:" << res->status << ", body:\"" << res->body << "\"]" ;
+
+			//promise.set_exception(std::make_exception_ptr(res->body));
+			//return -1;// promise.get_future();
+		}
+		else
+		{
+			RTC_LOG(INFO)  << __FUNCTION__ << __LINE__ <<"[" << res->body << "]" ;
+			auto response = nlohmann::json::parse(res->body);
+		}
+		
+
+		std::this_thread::sleep_for(std::chrono::microseconds(10000));
+		//std::cin.get();
 	}
 
 	return 0;

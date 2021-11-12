@@ -1,4 +1,4 @@
-#define MSC_CLASS "Transport"
+﻿#define MSC_CLASS "Transport"
 
 #include "Transport.hpp"
 #include "Logger.hpp"
@@ -213,7 +213,7 @@ namespace mediasoupclient
 				  normalizedEncodings.push_back(encoding);
 			  });
 		}
-
+		// 创建offer 的流程鸭
 		// May throw.
 		auto sendResult = this->sendHandler->Send(track, &normalizedEncodings, codecOptions);
 

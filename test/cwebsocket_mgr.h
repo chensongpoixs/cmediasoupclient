@@ -11,6 +11,9 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string>
+#include <mutex>
+#include <list>
+
 namespace webrtc
 {
 	enum CWEBSOCKET_TYPE
@@ -23,6 +26,9 @@ namespace webrtc
 	};
 	class cwebsocket_mgr 
 	{
+	private:
+		typedef		std::lock_guard<std::mutex>			clock_guard;
+		//typedef		std::mutex							clock;
 	public:
 		cwebsocket_mgr();
 		~cwebsocket_mgr();
@@ -31,6 +37,7 @@ namespace webrtc
 		void start();
 		void destroy();
 		
+		void send(const std::string & message);
 
 		CWEBSOCKET_TYPE get_status() const { return m_status; }
 	private:
@@ -46,6 +53,8 @@ namespace webrtc
 		std::atomic<bool>				m_stoped;
 		std::atomic<CWEBSOCKET_TYPE>	m_status;
 		wsclient::WebSocket::pointer	m_ws;
+		std::mutex						m_mutex;
+		std::list<std::string>			m_send_msgs;
 	};
 
 	extern cwebsocket_mgr g_websocket_mgr;

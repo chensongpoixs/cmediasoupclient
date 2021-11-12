@@ -106,7 +106,7 @@ private:
 	mediasoupclient::DataProducer* dataProducer{ nullptr };
 	mediasoupclient::DataConsumer* dataConsumer{ nullptr };
 
-	std::string id = std::to_string(rtc::CreateRandomId());
+	std::string id =  std::to_string(rtc::CreateRandomId());
 	std::string baseUrl;
 	std::thread sendDataThread;
 
@@ -119,6 +119,7 @@ private:
 	void CreateSendTransport(bool enableAudio, bool useSimulcast);
 	void CreateRecvTransport();
 	void CreateDataConsumer();
+	void createDataConsumer(std::string dataConsumerId,std::string dataProducerId,std::string streamId);
 };
 
 #endif // STOKER_HPP

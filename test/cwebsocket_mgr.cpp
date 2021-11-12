@@ -1,5 +1,5 @@
 #include "cwebsocket_mgr.h"
-
+#include "Broadcaster.hpp"
 namespace webrtc
 {
 
@@ -11,13 +11,24 @@ namespace webrtc
 			:ws(_ws)
 		{
 		}
-		void OnMessage(const std::string& message) {
-			printf("RX: %s\n",message.c_str());
-			if (message == "world") 
-				ws->close();
+		void OnMessage(const std::string& message) 
+		{
+			RTC_LOG(LS_INFO) << "["<< __FUNCTION__ << "][" << __LINE__ <<"RX: " << message;
+			//printf("RX: %s\n",message.c_str());
+			//if (message == "world") 
+				//ws->close();
 		}
 
-		void OnMessage(const std::vector<uint8_t>& message) {
+		void OnMessage(const std::vector<uint8_t>& message) 
+		{
+			
+			std::ostringstream cmd;
+			for (const uint8_t& value : message)
+			{
+				cmd << ", " << value;
+			}
+			RTC_LOG(LS_INFO) << "["<< __FUNCTION__ << "][" << __LINE__ <<"RX: " << cmd.str().c_str();
+			
 		}
 
 		wsclient::WebSocket* ws;
@@ -92,6 +103,12 @@ namespace webrtc
 			m_thread.join();
 		}
 	}
+
+	void cwebsocket_mgr::send(const std::string & message)
+	{
+		clock_guard lock(m_mutex);
+		m_send_msgs.push_back(message);
+	}
 	void cwebsocket_mgr::_work_thread()
 	{
 		WebSocketCallback callback(m_ws);
@@ -99,6 +116,16 @@ namespace webrtc
 		{
 			m_ws->poll();
 			m_ws->dispatch(callback);
+			if (m_send_msgs.size())
+			{
+				clock_guard lock(m_mutex);
+				while (m_send_msgs.size())
+				{
+					std::string & send_message = m_send_msgs.front();
+					m_ws->send(send_message);
+					m_send_msgs.pop_front();
+				}
+			}
 		}
 		if (m_ws)
 		{

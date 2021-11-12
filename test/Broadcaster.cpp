@@ -1,4 +1,4 @@
-#include "Broadcaster.hpp"
+﻿#include "Broadcaster.hpp"
 #include "MediaStreamTrackFactory.hpp"
 #include "mediasoupclient.hpp"
 #include "json.hpp"
@@ -12,7 +12,7 @@
 #include <thread>
 #include "httplib.h"
 #include "ccfg.h"
-
+#include "peerConnectionUtils.hpp"
 using json = nlohmann::json;
 
 Broadcaster::~Broadcaster()
@@ -499,13 +499,18 @@ void Broadcaster::CreateDataConsumer()
 		std::cerr << "[ERROR] 'streamId' missing in response" << std::endl;
 		return;
 	}
+	RTC_LOG(LS_INFO) << " consume mediasoup recv  url = " << url << ", body = " << body.dump();
 	uint16_t streamId = response["streamId"].get<uint16_t>();
 	auto json_value = nlohmann::json();
 	// Create client consumer.
 	this->dataConsumer = this->recvTransport->ConsumeData(
-	  this, dataConsumerId, dataProducerId, std::to_string(streamId), "chat", "");
+	  this, dataConsumerId, dataProducerId, std::to_string(streamId), "chat", "stcp");
 }
-
+void Broadcaster::createDataConsumer(std::string dataConsumerId, std::string dataProducerId, std::string streamId)
+{
+	this->recvTransport->ConsumeData(
+		this, dataConsumerId, dataProducerId, streamId, "chat", "stcp");
+}
 void Broadcaster::CreateSendTransport(bool enableAudio, bool useSimulcast)
 {
 	std::cout << "[INFO] creating mediasoup send WebRtcTransport..." << std::endl;
@@ -591,7 +596,7 @@ void Broadcaster::CreateSendTransport(bool enableAudio, bool useSimulcast)
 	std::cout << "[INFO] creating SendTransport..." << std::endl;
 
 	auto sendTransportId = response["id"].get<std::string>();
-
+	// 创建offer 的流程 回调 onConnect函数
 	this->sendTransport = this->device.CreateSendTransport(
 	  this,
 	  sendTransportId,
@@ -695,9 +700,9 @@ void Broadcaster::CreateSendTransport(bool enableAudio, bool useSimulcast)
 
 	///////////////////////// Create Data Producer //////////////////////////
 
-	this->dataProducer = sendTransport->ProduceData(this);
+	this->dataProducer = sendTransport->ProduceData(this, "chat", "stcp");
 
-	uint32_t intervalSeconds = 10;
+	uint32_t intervalSeconds = 1;
 	std::thread([this, intervalSeconds]() {
 		bool run = true;
 		while (run)
@@ -834,6 +839,7 @@ void Broadcaster::Stop()
 
 	this->timerKiller.Kill();
 
+	stopTrack();
 	if (this->recvTransport)
 	{
 		recvTransport->Close();
