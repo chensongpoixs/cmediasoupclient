@@ -205,6 +205,7 @@ int main(int argc, char* argv[])
 
 	std::cout << "[INFO] press Ctrl+C or Cmd+C to leave..." << std::endl;
 	std::string new_url  =  url + "/chensong";
+	std::set<std::string> dataProduceIds;
 	while (!stoped)
 	{
 		//broadcaster.createDataConsumer();
@@ -228,12 +229,142 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			RTC_LOG(INFO)  << __FUNCTION__ << __LINE__ <<"[" << res->body << "]" ;
+			//RTC_LOG(INFO)  << __FUNCTION__ << __LINE__ <<"[" << res->body << "]" ;
 			auto response = nlohmann::json::parse(res->body);
+
+			/*
+			{
+    "peers":[
+        {
+            "id":"vqsz1a1g",
+            "displayName":"Doublade",
+            "device":{
+                "flag":"chrome",
+                "name":"Chrome",
+                "version":"95.0.4638.69"
+            },
+            "transports":[
+                {
+                    "id":"586d48c7-d370-4fc1-9d3b-b5d209b2b933"
+                },
+                {
+                    "id":"026b77b1-a0f0-4377-b69e-4ad9470448a6"
+                }
+            ],
+            "dataProducers":[
+                {
+                    "id":"d3221396-02da-400c-b2f8-ba8883bf690b",
+                    "label":"chat",
+                    "protocol":""
+                },
+                {
+                    "id":"60a0d2d5-04f2-4726-b80b-40d21217c473",
+                    "label":"bot",
+                    "protocol":""
+                }
+            ],
+            "dataConsumers":[
+                {
+                    "id":"c92efaa6-c6b9-4965-9ed8-79912e2aaefc",
+                    "sctpStreamParameters":{
+                        "maxRetransmits":1,
+                        "ordered":false,
+                        "streamId":1
+                    },
+                    "label":"chat",
+                    "protocol":"",
+                    "dataProducerId":"c28d81fb-3d00-49c5-a434-baa5ad2a655a",
+                    "displayName":"Toxapex"
+                }
+            ]
+        },
+        {
+            "id":"vznfk7u6",
+            "displayName":"Toxapex",
+            "device":{
+                "flag":"chrome",
+                "name":"Chrome",
+                "version":"95.0.4638.69"
+            },
+            "transports":[
+                {
+                    "id":"1ae9c259-314b-444f-837c-896783ffedbd"
+                },
+                {
+                    "id":"43682bb4-6329-4aca-bad1-2e4ba7c1d550"
+                }
+            ],
+            "dataProducers":[
+                {
+                    "id":"c28d81fb-3d00-49c5-a434-baa5ad2a655a",
+                    "label":"chat",
+                    "protocol":""
+                },
+                {
+                    "id":"a47ad3c7-8837-4519-aaea-18495d3bcbbc",
+                    "label":"bot",
+                    "protocol":""
+                }
+            ],
+            "dataConsumers":[
+                {
+                    "id":"6daf12dc-871b-4cf9-85b4-842f46c2ca91",
+                    "sctpStreamParameters":{
+                        "maxRetransmits":1,
+                        "ordered":false,
+                        "streamId":1
+                    },
+                    "label":"chat",
+                    "protocol":"",
+                    "dataProducerId":"d3221396-02da-400c-b2f8-ba8883bf690b",
+                    "displayName":"Doublade"
+                }
+            ]
+        }
+    ]
+}
+
+
+			*/
+
+			if (response["peers"].is_array())
+			{
+				for (int i = 0; i < response["peers"].size(); ++i)
+				{
+					if (response["peers"][i]["displayName"] != "test" )
+					{
+						auto iter = dataProduceIds.find(response["peers"][i]["displayName"]);
+						if (iter != dataProduceIds.end())
+						{
+							continue;
+						}
+						std::string displayName = response["peers"][i]["displayName"];
+						
+						for (int j = 0; j < response["peers"][i]["dataProducers"].size(); ++j)
+						{
+							if ("chat" == response["peers"][i]["dataProducers"][j]["label"])
+							{
+								//dataProduceIds;
+								//std::string id = response["peers"][i]["dataProducers"][j]["id"];
+								std::string dataProducerId = response["peers"][i]["dataProducers"][j]["id"];
+								//uint32_t streamId = response["peers"][i]["dataConsumers"][j]["sctpStreamParameters"]["streamId"];
+								//json AppData = response["peers"][i]["dataConsumers"][j]["sctpStreamParameters"]["AppData"];;
+								json body =
+								{
+									{ "dataProducerId", dataProducerId }
+								};
+								broadcaster.CreateDataConsumer(body);
+								RTC_LOG(LS_INFO) << "id = " << id << ", dataProducerId = " << dataProducerId;
+								dataProduceIds.insert(displayName);
+							}
+						}
+					}
+				}
+			}
 		}
 		
 
-		std::this_thread::sleep_for(std::chrono::microseconds(10000));
+		std::this_thread::sleep_for(std::chrono::microseconds(100));
 		//std::cin.get();
 	}
 

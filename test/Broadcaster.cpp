@@ -440,15 +440,15 @@ void Broadcaster::Start(
 	this->CreateRecvTransport();
 }
 
-void Broadcaster::CreateDataConsumer()
+void Broadcaster::CreateDataConsumer(const json& body)
 {
-	const std::string& dataProducerId = this->dataProducer->GetId();
+	//const std::string& dataProducerId = this->dataProducer->GetId();
 
 	/* clang-format off */
-	json body =
+	/*json body =
 	{
 		{ "dataProducerId", dataProducerId }
-	};
+	};*/
 	/* clang-format on */
 	// create server data consumer
 	/*auto r = cpr::PostAsync(
@@ -504,13 +504,13 @@ void Broadcaster::CreateDataConsumer()
 	auto json_value = nlohmann::json();
 	// Create client consumer.
 	this->dataConsumer = this->recvTransport->ConsumeData(
-	  this, dataConsumerId, dataProducerId, std::to_string(streamId), "chat", "stcp");
+	  this, dataConsumerId, body["dataProducerId"]/*dataProducerId*/, std::to_string(streamId), "chat", "stcp");
 }
-void Broadcaster::createDataConsumer(std::string dataConsumerId, std::string dataProducerId, std::string streamId)
-{
-	this->recvTransport->ConsumeData(
-		this, dataConsumerId, dataProducerId, streamId, "chat", "stcp");
-}
+//void Broadcaster::createDataConsumer(std::string dataConsumerId, std::string dataProducerId, std::string streamId, const nlohmann::json& appData)
+//{
+//	this->recvTransport->ConsumeData(
+//		this, dataConsumerId, dataProducerId, "chat", "stcp", appData);
+//}
 void Broadcaster::CreateSendTransport(bool enableAudio, bool useSimulcast)
 {
 	std::cout << "[INFO] creating mediasoup send WebRtcTransport..." << std::endl;
@@ -702,7 +702,7 @@ void Broadcaster::CreateSendTransport(bool enableAudio, bool useSimulcast)
 
 	this->dataProducer = sendTransport->ProduceData(this, "chat", "stcp");
 
-	uint32_t intervalSeconds = 1;
+	uint32_t intervalSeconds = 100;
 	std::thread([this, intervalSeconds]() {
 		bool run = true;
 		while (run)
@@ -818,8 +818,14 @@ void Broadcaster::CreateRecvTransport()
 	  response["iceCandidates"],
 	  response["dtlsParameters"],
 	  sctpParameters);
+	const std::string& dataProducerId = this->dataProducer->GetId();
 
-	this->CreateDataConsumer();
+	/* clang-format off */
+ 	json body_json =
+	{
+	{ "dataProducerId", dataProducerId }
+	};
+	this->CreateDataConsumer(body_json);
 }
 
 void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const webrtc::DataBuffer& buffer)

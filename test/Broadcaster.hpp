@@ -8,7 +8,7 @@
 #include <future>
 #include <mutex>
 #include <string>
-
+using json = nlohmann::json;
 class Broadcaster : public
                     mediasoupclient::SendTransport::Listener,
                     mediasoupclient::RecvTransport::Listener,
@@ -118,8 +118,10 @@ private:
 
 	void CreateSendTransport(bool enableAudio, bool useSimulcast);
 	void CreateRecvTransport();
-	void CreateDataConsumer();
-	void createDataConsumer(std::string dataConsumerId,std::string dataProducerId,std::string streamId);
+	public:
+	void CreateDataConsumer(const json& body);
+	public:
+	//void createDataConsumer(std::string dataConsumerId,std::string dataProducerId,std::string streamId, const nlohmann::json& appData);
 };
 
 #endif // STOKER_HPP
