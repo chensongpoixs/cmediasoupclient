@@ -378,6 +378,9 @@ void Broadcaster::Start(
 {
 	std::cout << "[INFO] Broadcaster::Start()" << std::endl;
 
+	m_wight = GetSystemMetrics(SM_CXSCREEN);
+	m_height = GetSystemMetrics(SM_CYSCREEN);
+
 	this->baseUrl   = baseUrl;
 	this->verifySsl = verifySsl;
 
@@ -393,7 +396,7 @@ void Broadcaster::Start(
 		{ "displayName", name     },
 		{ "device",
 			{
-				{ "name",    "libmediasoupclient"       },
+				{ "name",    "chensong"       },
 				{ "version", mediasoupclient::Version() }
 			}
 		},
@@ -831,12 +834,81 @@ void Broadcaster::CreateRecvTransport()
 void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const webrtc::DataBuffer& buffer)
 {
 	std::string s = std::string(buffer.data.data<char>(), buffer.data.size());
+
+
 	RTC_LOG(LS_INFO)<< "[INFO] Broadcaster::OnMessage()"  << "dataConsumer->GetLabel() = " << dataConsumer->GetLabel()<< "[s = " << s << "]";
 	if (dataConsumer->GetLabel() == "chat")
 	{
-		
+
 		std::cout << "[INFO] received chat data: " + s << std::endl;
 	}
+	json response;
+	try
+	{
+		response = json::parse(s);
+	}
+	catch (const std::exception&)
+	{
+		RTC_LOG(LS_ERROR) << "json parse error !!!!";
+		return;
+	}
+	if (response.find("event") == response.end())
+	{
+		RTC_LOG(LS_ERROR) << "[ERROR] 'event' missing in response" ;
+
+		return;
+	}
+	if (response.find("wight") == response.end())
+	{
+		RTC_LOG(LS_ERROR) << "[ERROR] 'wight' missing in response" ;
+
+		return;
+	}
+	if (response.find("height") == response.end())
+	{
+		RTC_LOG(LS_ERROR) << "[ERROR] 'height' missing in response";
+
+		return;
+	}
+	if (response.find("windowwidth") == response.end())
+	{
+		RTC_LOG(LS_ERROR) << "[ERROR] 'windowwidth' missing in response";
+
+		return;
+	}
+	if (response.find("windowheight") == response.end())
+	{
+		RTC_LOG(LS_ERROR) << "[ERROR] 'windowheight' missing in response";
+
+		return;
+	}
+	uint64_t event = response["event"];
+	uint64_t wight = response["wight"];
+	uint64_t height = response["height"];
+	uint64_t windowwidth =  response["windowwidth"];
+	uint64_t windowheight =  response["windowheight"];
+	if (wight <= 0)
+	{
+		wight = 0;
+	}
+	if (height <= 0)
+	{
+		height = 0;
+	}
+	if (wight > windowwidth)
+	{
+		wight = windowwidth;
+	}
+	if (height > windowheight)
+	{
+		height = windowheight;
+	}
+	uint64_t x = (wight / windowwidth) * m_wight;
+	uint64_t y = (height / windowheight) * m_height;
+	RTC_LOG(LS_INFO) << "wight = " << wight << ", height = " << height << ", windowwidth = " << windowwidth << ", windowheight = " << windowwidth;
+	RTC_LOG(LS_INFO) << "x = " << x << ", y = " << y;
+	mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE, x * 65535 / m_wight, y * 65535 / m_height, 0, 0 );
+
 }
 
 void Broadcaster::Stop()

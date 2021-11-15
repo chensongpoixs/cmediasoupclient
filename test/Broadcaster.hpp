@@ -121,6 +121,11 @@ private:
 	public:
 	void CreateDataConsumer(const json& body);
 	public:
+
+
+private:
+	uint64_t				m_wight;
+	uint64_t				m_height;
 	//void createDataConsumer(std::string dataConsumerId,std::string dataProducerId,std::string streamId, const nlohmann::json& appData);
 };
 
