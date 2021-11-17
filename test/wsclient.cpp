@@ -254,6 +254,10 @@ class _RealWebSocket : public wsclient::WebSocket
         if (!txbuf.size() && readyState == CLOSING) {
             closesocket(sockfd);
             readyState = CLOSED;
+			/*if (callable)
+			{
+				callable.OnClose();
+			}*/
         }
     }
 

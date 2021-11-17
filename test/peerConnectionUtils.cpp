@@ -31,12 +31,13 @@ public:
 	static rtc::scoped_refptr<CapturerTrackSource> Create()
 	{
 		std::unique_ptr<DesktopCapture> capturer =
-			absl::WrapUnique(DesktopCapture::Create(30, 0));
+			absl::WrapUnique(DesktopCapture::Create(60, 0));
 		if (!capturer)
 		{
 			return nullptr;
 		}
 		capturer->StartCapture();
+		capturer->AddOrUpdateSink(capturer.get(), rtc::VideoSinkWants());
 		return new rtc::RefCountedObject<CapturerTrackSource>(std::move(capturer));
 		/*const size_t kWidth       = 1280;
 		const size_t kHeight      = 720;

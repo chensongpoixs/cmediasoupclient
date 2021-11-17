@@ -8,6 +8,10 @@
 #include "httplib.h"
 #include "cwebsocket_mgr.h"
 #include "ccfg.h"
+#include <WinUser.h>
+#include <Windows.h>
+
+
 
 using json = nlohmann::json;
 Broadcaster broadcaster;
@@ -23,11 +27,94 @@ void signalHandler(int signum)
 	//std::exit(signum);
 }
 
+
+void test_win()
+{
+	// 获取带标题栏和菜单栏即全屏像素大小
+	int width = GetSystemMetrics(SM_CXSCREEN);
+	int height = GetSystemMetrics(SM_CYSCREEN);
+
+
+	printf("width = %d, height = %d\n", width, height);
+	// 睡眠5s，准备时间
+	//Sleep(5000);
+	// 死循环
+	int w = 0;
+	while (1) 
+	{
+		w += 10;
+		if (width < w)
+		{
+			w = 0;
+		}
+		printf("-%d----\n", w);
+		// 移动到绝对位置右击
+		mouse_event(MOUSEEVENTF_WHEEL, 0, 0, w, 0);
+		//mouse_event(MOUSEEVENTF_ABSOLUTE  | MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP/* | MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP*/ | MOUSEEVENTF_MOVE, w * 65535 / width, 362 * 65535 / height, 0, 0 );
+		std::this_thread::sleep_for(std::chrono::seconds(3));
+
+		// 按下'q'键
+		//keybd_event(81, 0, 0, 0);
+		//keybd_event(81, 0, KEYEVENTF_KEYUP, 0);
+		//Sleep(500);
+		w += 10;
+		if (width < w)
+		{
+			w = 0;
+		}
+		// 移动到绝对位置右击
+		printf("-%d----\n", w);
+		mouse_event(MOUSEEVENTF_WHEEL, 0, 0, w, 0);
+		//mouse_event(MOUSEEVENTF_ABSOLUTE  | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP/*| MOUSEEVENTF_RIGHTDOWN  | MOUSEEVENTF_RIGHTUP*/ , w * 65535 / width, 760 * 65535 / height, 0, 0 );
+		std::this_thread::sleep_for(std::chrono::seconds(3));
+		
+	}
+
+}
+
+
+void test_scroll()
+{
+	//1.先获得桌面窗口
+	HWND windows = ::GetDesktopWindow();
+	SCROLLINFO scrollinfo;
+	//SCROLLINFO info;
+	//scrollinfo.nPos = 50;
+	scrollinfo.cbSize = sizeof(SCROLLINFO);
+	bool ret = 	GetScrollInfo(windows, SB_VERT, &scrollinfo/*SIF_ALL*/);
+
+
+	/*cbSize = sizeof (SCROLLINFO) ;
+	fMask = SIF_RANGE | SIF_PAGE ;
+	nMin = 0 ;
+	nMax = NUMLINES - 1 ;
+	nPage = cyClient / cyChar ;
+	SetScrollInfo (hwnd, SB_VERT, &si, TRUE) ;*/
+	/*switch (nSBCode)
+	{
+	case SB_LINERIGHT:*/
+		//if (scrollinfo.nPos < scrollinfo.nMax)
+		while(true)
+		{
+			scrollinfo.nPos += 10;
+			SetScrollInfo(SB_HORZ, 0, &scrollinfo, 0);
+			//ScrollWindow(-10, 0);
+			printf("pos = %d ----\n", scrollinfo.nPos);
+			std::this_thread::sleep_for(std::chrono::seconds(3));
+		}
+		
+
+		//break;
+	//}
+}
+
 int main(int argc, char* argv[])
 {
 	// Register signal SIGINT and signal handler.
-	
-	
+	//test_win();
+	//return 0;
+	/*test_scroll();
+	return 0;*/
 
 	signal(SIGINT, signalHandler);
 	const char* config_filename = "client.cfg";
@@ -41,6 +128,7 @@ int main(int argc, char* argv[])
 		RTC_LOG(LS_ERROR) << "config init failed !!!" << config_filename;
 		return -1;
 	}
+	webrtc::g_cfg.show();
 	webrtc::g_cfg.show();
 	std::string ws_url = "ws://" + webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host)+ ":" + std::to_string(webrtc::g_cfg.get_int32(webrtc::ECI_MediaSoup_Http_Port)) +"/?roomId="+webrtc::g_cfg.get_string(webrtc::ECI_Room_Name) +"&peerId=" + webrtc::g_cfg.get_string(webrtc::ECI_Client_Name);//ws://127.0.0.1:8888/?roomId=chensong&peerId=xiqhlyrn", "http://127.0.0.1:8888")
 	std::string origin = "http://" + webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host)+ ":" + std::to_string(webrtc::g_cfg.get_int32(webrtc::ECI_MediaSoup_Http_Port)) ;
@@ -364,7 +452,7 @@ int main(int argc, char* argv[])
 		}
 		
 
-		std::this_thread::sleep_for(std::chrono::microseconds(100));
+		std::this_thread::sleep_for(std::chrono::seconds(1));
 		//std::cin.get();
 	}
 

@@ -120,15 +120,18 @@ void DesktopCapture::OnCaptureResult(
 
   // seting 马流的信息
 
-  webrtc::VideoFrame captureFrame =
-	  webrtc::VideoFrame::Builder()
-	  .set_video_frame_buffer(i420_buffer_)
-	  .set_timestamp_rtp(0)
-	  .set_timestamp_ms(rtc::TimeMillis())
-	  .set_rotation(webrtc::kVideoRotation_0)
-	  .build();
-  captureFrame.set_ntp_time_ms(0);
-  DesktopCaptureSource::OnFrame(captureFrame);
+  {
+	  webrtc::VideoFrame captureFrame =
+		  webrtc::VideoFrame::Builder()
+		  .set_video_frame_buffer(i420_buffer_)
+		  .set_timestamp_rtp(0)
+		  .set_timestamp_ms(rtc::TimeMillis())
+		  .set_rotation(webrtc::kVideoRotation_0)
+		  .build();
+	  captureFrame.set_ntp_time_ms(0);
+	  DesktopCaptureSource::OnFrame(captureFrame);
+  }
+ 
   // rtc media info 
  /* DesktopCaptureSource::OnFrame(
       webrtc::VideoFrame(i420_buffer_, 0, 0, webrtc::kVideoRotation_0));*/
@@ -145,10 +148,28 @@ void DesktopCapture::StartCapture() {
   // Start new thread to capture
   capture_thread_.reset(new std::thread([this]() {
     dc_->Start(this);
+	using namespace std::chrono;
 
-    while (start_flag_) {
+	uint32_t elapse = 0;
+	steady_clock::time_point cur_time;
+	steady_clock::time_point pre_time = steady_clock::now();
+	steady_clock::duration dur;
+	milliseconds ms;
+    while (start_flag_) 
+	{
+		cur_time = steady_clock::now();
+		dur = cur_time - pre_time;
+		ms = duration_cast<milliseconds>(dur);
+		elapse = static_cast<uint32_t>(ms.count());
+		pre_time = cur_time;
       dc_->CaptureFrame();
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 / fps_));
+	  cur_time = steady_clock::now();
+
+	  dur = cur_time - pre_time;
+	  ms = duration_cast<milliseconds>(dur);
+	  elapse = static_cast<uint32_t>(ms.count());
+	//  RTC_LOG(LS_INFO) << "captureFrame fps = " << elapse;
+      std::this_thread::sleep_for(std::chrono::milliseconds(100 /fps_));
     }
   }));
 }

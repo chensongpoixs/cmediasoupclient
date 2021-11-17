@@ -10,6 +10,7 @@ class WebSocketCallback {
 public:
 	virtual void OnMessage(const std::string& message) {}
 	virtual void OnMessage(const std::vector<uint8_t>& message) {}
+	virtual void OnClose() {}
 };
 
 class WebSocket {

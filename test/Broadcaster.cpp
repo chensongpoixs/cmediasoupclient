@@ -883,31 +883,56 @@ void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const w
 		return;
 	}
 	uint64_t event = response["event"];
-	uint64_t wight = response["wight"];
-	uint64_t height = response["height"];
-	uint64_t windowwidth =  response["windowwidth"];
-	uint64_t windowheight =  response["windowheight"];
-	if (wight <= 0)
+	double wight = response["wight"];
+	double height = response["height"];
+	double windowwidth =  response["windowwidth"];
+	double windowheight =  response["windowheight"];
+	/*if (wight <= 0)
 	{
 		wight = 0;
 	}
 	if (height <= 0)
 	{
 		height = 0;
-	}
-	if (wight > windowwidth)
+	}*/
+	/*if (wight > windowwidth)
 	{
 		wight = windowwidth;
 	}
 	if (height > windowheight)
 	{
 		height = windowheight;
+	}*/
+
+	DWORD action = 0;
+	if (event == 0)
+	{
+		action = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
 	}
-	uint64_t x = (wight / windowwidth) * m_wight;
-	uint64_t y = (height / windowheight) * m_height;
-	RTC_LOG(LS_INFO) << "wight = " << wight << ", height = " << height << ", windowwidth = " << windowwidth << ", windowheight = " << windowwidth;
-	RTC_LOG(LS_INFO) << "x = " << x << ", y = " << y;
-	mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE, x * 65535 / m_wight, y * 65535 / m_height, 0, 0 );
+	else if (event == 1)
+	{
+		return;
+		action =MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
+	}
+	else if (event == 2)
+	{
+		action =MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN ;
+	}
+	else if (event == 3)
+	{
+		action =MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE  | MOUSEEVENTF_LEFTUP;
+	}
+
+	static uint64_t HT = 100000;
+	double wx = (wight / windowwidth) * HT ;
+	double hy = height / windowheight * HT;
+	double  x = (wx * m_wight)/HT;
+	double y = (hy * m_height)/HT;
+	RTC_LOG(LS_INFO) << "wight = " << wight << ", height = " << height << ", windowwidth = " << windowwidth << ", windowheight = " << windowheight;
+	RTC_LOG(LS_INFO) << "wx = " << wx << ", hy = " << hy <<"x = " << x << ", y = " << y;
+	mouse_event(action, x * 65535 / m_wight, y * 65535 / m_height, 0, 0 );
+
+
 
 }
 

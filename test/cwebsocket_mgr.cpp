@@ -30,6 +30,10 @@ namespace webrtc
 			RTC_LOG(LS_INFO) << "["<< __FUNCTION__ << "][" << __LINE__ <<"RX: " << cmd.str().c_str();
 			
 		}
+		void OnClose()
+		{
+
+		}
 
 		wsclient::WebSocket* ws;
 	};
@@ -112,12 +116,14 @@ namespace webrtc
 	void cwebsocket_mgr::_work_thread()
 	{
 		WebSocketCallback callback(m_ws);
-		while (!m_stoped && m_ws->getReadyState() != wsclient::WebSocket::CLOSED) 
+		while (!m_stoped && m_ws->getReadyState() == wsclient::WebSocket::OPEN) 
 		{
+			
 			m_ws->poll();
 			m_ws->dispatch(callback);
 			if (m_send_msgs.size())
 			{
+
 				clock_guard lock(m_mutex);
 				while (m_send_msgs.size())
 				{
@@ -126,13 +132,17 @@ namespace webrtc
 					m_send_msgs.pop_front();
 				}
 			}
+			else
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			}
 		}
 		if (m_ws)
 		{
 			delete m_ws;
 			m_ws = nullptr;
 		}
-
+		m_stoped.store(true);
 #ifdef _WIN32
 		WSACleanup();
 #endif
