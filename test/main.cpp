@@ -76,12 +76,14 @@ void test_win()
 void test_scroll()
 {
 	//1.先获得桌面窗口
-	HWND windows = ::GetDesktopWindow();
-	SCROLLINFO scrollinfo;
-	//SCROLLINFO info;
-	//scrollinfo.nPos = 50;
-	scrollinfo.cbSize = sizeof(SCROLLINFO);
-	bool ret = 	GetScrollInfo(windows, SB_VERT, &scrollinfo/*SIF_ALL*/);
+	//HWND windows = ::GetDesktopWindow();
+	//SCROLLINFO scrollinfo;
+	////SCROLLINFO info;
+	////scrollinfo.nPos = 50;
+	//scrollinfo.cbSize = sizeof(SCROLLINFO);
+	//scrollinfo.fMask = SIF_ALL;
+	//scrollinfo.nPos = 10;
+	//bool ret = 	GetScrollInfo(windows, SB_VERT, &scrollinfo/*SIF_ALL*/);
 
 
 	/*cbSize = sizeof (SCROLLINFO) ;
@@ -94,12 +96,18 @@ void test_scroll()
 	{
 	case SB_LINERIGHT:*/
 		//if (scrollinfo.nPos < scrollinfo.nMax)
+	bool x = true;
+	int delta = 0;
 		while(true)
 		{
-			scrollinfo.nPos += 10;
-			SetScrollInfo(SB_HORZ, 0, &scrollinfo, 0);
-			//ScrollWindow(-10, 0);
-			printf("pos = %d ----\n", scrollinfo.nPos);
+			//scrollinfo.nPos += 10;
+			//SetScrollInfo(SB_HORZ, 0, &scrollinfo, 0);
+			////ScrollWindow(-10, 0);
+			//printf("pos = %d ----\n", scrollinfo.nPos);
+			//std::this_thread::sleep_for(std::chrono::seconds(3));
+			delta += 10;
+			mouse_event(MOUSEEVENTF_ABSOLUTE |/*MOUSEEVENTF_HWHEEL*/  MOUSEEVENTF_WHEEL , 0, 0, delta, 0);
+			printf("delta = %d\n", delta);
 			std::this_thread::sleep_for(std::chrono::seconds(3));
 		}
 		
@@ -319,101 +327,6 @@ int main(int argc, char* argv[])
 		{
 			//RTC_LOG(INFO)  << __FUNCTION__ << __LINE__ <<"[" << res->body << "]" ;
 			auto response = nlohmann::json::parse(res->body);
-
-			/*
-			{
-    "peers":[
-        {
-            "id":"vqsz1a1g",
-            "displayName":"Doublade",
-            "device":{
-                "flag":"chrome",
-                "name":"Chrome",
-                "version":"95.0.4638.69"
-            },
-            "transports":[
-                {
-                    "id":"586d48c7-d370-4fc1-9d3b-b5d209b2b933"
-                },
-                {
-                    "id":"026b77b1-a0f0-4377-b69e-4ad9470448a6"
-                }
-            ],
-            "dataProducers":[
-                {
-                    "id":"d3221396-02da-400c-b2f8-ba8883bf690b",
-                    "label":"chat",
-                    "protocol":""
-                },
-                {
-                    "id":"60a0d2d5-04f2-4726-b80b-40d21217c473",
-                    "label":"bot",
-                    "protocol":""
-                }
-            ],
-            "dataConsumers":[
-                {
-                    "id":"c92efaa6-c6b9-4965-9ed8-79912e2aaefc",
-                    "sctpStreamParameters":{
-                        "maxRetransmits":1,
-                        "ordered":false,
-                        "streamId":1
-                    },
-                    "label":"chat",
-                    "protocol":"",
-                    "dataProducerId":"c28d81fb-3d00-49c5-a434-baa5ad2a655a",
-                    "displayName":"Toxapex"
-                }
-            ]
-        },
-        {
-            "id":"vznfk7u6",
-            "displayName":"Toxapex",
-            "device":{
-                "flag":"chrome",
-                "name":"Chrome",
-                "version":"95.0.4638.69"
-            },
-            "transports":[
-                {
-                    "id":"1ae9c259-314b-444f-837c-896783ffedbd"
-                },
-                {
-                    "id":"43682bb4-6329-4aca-bad1-2e4ba7c1d550"
-                }
-            ],
-            "dataProducers":[
-                {
-                    "id":"c28d81fb-3d00-49c5-a434-baa5ad2a655a",
-                    "label":"chat",
-                    "protocol":""
-                },
-                {
-                    "id":"a47ad3c7-8837-4519-aaea-18495d3bcbbc",
-                    "label":"bot",
-                    "protocol":""
-                }
-            ],
-            "dataConsumers":[
-                {
-                    "id":"6daf12dc-871b-4cf9-85b4-842f46c2ca91",
-                    "sctpStreamParameters":{
-                        "maxRetransmits":1,
-                        "ordered":false,
-                        "streamId":1
-                    },
-                    "label":"chat",
-                    "protocol":"",
-                    "dataProducerId":"d3221396-02da-400c-b2f8-ba8883bf690b",
-                    "displayName":"Doublade"
-                }
-            ]
-        }
-    ]
-}
-
-
-			*/
 
 			if (response["peers"].is_array())
 			{

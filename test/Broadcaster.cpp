@@ -922,6 +922,27 @@ void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const w
 	{
 		action =MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE  | MOUSEEVENTF_LEFTUP;
 	}
+	else if (event == 4)
+	{
+		action =MOUSEEVENTF_ABSOLUTE |MOUSEEVENTF_WHEEL;
+		static int wheel = 0;
+		wheel += 10;
+		mouse_event(action,0, 0, wheel, 0 );
+		return;
+	}
+	else if (event == 5)
+	{
+		action =MOUSEEVENTF_ABSOLUTE |MOUSEEVENTF_WHEEL;
+		static int wheel = 0;
+		wheel -= 10;
+		mouse_event(action,0, 0, wheel, 0 );
+		return;
+	}
+	else
+	{
+		RTC_LOG(LS_ERROR) << " event = " << event << " failed !!!";
+		return;
+	}
 
 	static uint64_t HT = 100000;
 	double wx = (wight / windowwidth) * HT ;
