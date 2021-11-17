@@ -15,6 +15,18 @@
 #include "peerConnectionUtils.hpp"
 using json = nlohmann::json;
 
+
+enum EACTION_MOUSE_TYPE
+{
+	EACTION_MOUSE_MOVE = 0,
+	EACTION_MOUSE_DOWNUP,
+	EACTION_MOUSE_DOWN,
+	EACTION_MOUSE_UP,
+	EACTION_MOUSE_BIG,
+	EACTION_MOUSE_SMALL
+};
+
+
 Broadcaster::~Broadcaster()
 {
 	this->Stop();
@@ -882,58 +894,55 @@ void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const w
 
 		return;
 	}
-	uint64_t event = response["event"];
+	EACTION_MOUSE_TYPE event = static_cast<EACTION_MOUSE_TYPE>(response["event"]);
 	double wight = response["wight"];
 	double height = response["height"];
 	double windowwidth =  response["windowwidth"];
 	double windowheight =  response["windowheight"];
-	/*if (wight <= 0)
+	if (wight < 0 || height < 0 || windowwidth < 0 || windowheight < 0)
 	{
-		wight = 0;
+		RTC_LOG(LS_ERROR) << "tail small  wight = " << wight << ", hieght = " << height << ", windowwidth = " << windowwidth << ", windowheight = " << windowheight << " failed !!!";
+		return;
 	}
-	if (height <= 0)
-	{
-		height = 0;
-	}*/
-	/*if (wight > windowwidth)
-	{
-		wight = windowwidth;
-	}
-	if (height > windowheight)
-	{
-		height = windowheight;
-	}*/
-
+	static int wheel = 0;
 	DWORD action = 0;
-	if (event == 0)
+
+
+	if (event == EACTION_MOUSE_MOVE)
 	{
 		action = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
 	}
-	else if (event == 1)
+	else if (event == EACTION_MOUSE_DOWNUP)
 	{
 		return;
-		action =MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
+		action = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
 	}
-	else if (event == 2)
+	else if (event == EACTION_MOUSE_DOWN)
 	{
 		action =MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN ;
 	}
-	else if (event == 3)
+	else if (event == EACTION_MOUSE_UP)
 	{
 		action =MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE  | MOUSEEVENTF_LEFTUP;
 	}
-	else if (event == 4)
+	else if (event == EACTION_MOUSE_BIG)
 	{
 		action =MOUSEEVENTF_ABSOLUTE |MOUSEEVENTF_WHEEL;
-		static int wheel = 0;
+		if (wheel < 0)
+		{
+			wheel = 0;
+		}
 		wheel += 10;
 		mouse_event(action,0, 0, wheel, 0 );
 		return;
 	}
-	else if (event == 5)
+	else if (event == EACTION_MOUSE_SMALL)
 	{
 		action =MOUSEEVENTF_ABSOLUTE |MOUSEEVENTF_WHEEL;
-		static int wheel = 0;
+		if (wheel > 0)
+		{
+			wheel = 0;
+		}
 		wheel -= 10;
 		mouse_event(action,0, 0, wheel, 0 );
 		return;
@@ -943,7 +952,7 @@ void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const w
 		RTC_LOG(LS_ERROR) << " event = " << event << " failed !!!";
 		return;
 	}
-
+	wheel = 0;
 	static uint64_t HT = 100000;
 	double wx = (wight / windowwidth) * HT ;
 	double hy = height / windowheight * HT;
