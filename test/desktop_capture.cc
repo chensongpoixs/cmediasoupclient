@@ -40,8 +40,9 @@ bool DesktopCapture::Init(size_t target_fps, size_t capture_screen_index)
 	//dc_ = webrtc::DesktopCapturer::CreateWindowCapturer(
 		//webrtc::DesktopCaptureOptions::CreateDefault());
 	//桌面
-	dc_ = webrtc::DesktopCapturer::CreateScreenCapturer(
-      webrtc::DesktopCaptureOptions::CreateDefault());
+	webrtc::DesktopCaptureOptions result;
+	result.set_allow_directx_capturer(true);
+	dc_ = webrtc::DesktopCapturer::CreateScreenCapturer(result);
 
   if (!dc_)
     return false;
@@ -148,28 +149,13 @@ void DesktopCapture::StartCapture() {
   // Start new thread to capture
   capture_thread_.reset(new std::thread([this]() {
     dc_->Start(this);
-	using namespace std::chrono;
-
-	uint32_t elapse = 0;
-	steady_clock::time_point cur_time;
-	steady_clock::time_point pre_time = steady_clock::now();
-	steady_clock::duration dur;
-	milliseconds ms;
+	
     while (start_flag_) 
 	{
-		cur_time = steady_clock::now();
-		dur = cur_time - pre_time;
-		ms = duration_cast<milliseconds>(dur);
-		elapse = static_cast<uint32_t>(ms.count());
-		pre_time = cur_time;
       dc_->CaptureFrame();
-	  cur_time = steady_clock::now();
-
-	  dur = cur_time - pre_time;
-	  ms = duration_cast<milliseconds>(dur);
-	  elapse = static_cast<uint32_t>(ms.count());
+	  
 	//  RTC_LOG(LS_INFO) << "captureFrame fps = " << elapse;
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 /fps_));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps_));
     }
   }));
 }

@@ -18,6 +18,7 @@ namespace webrtc {
 		ECI_MediaSoup_WebSocket_Port,
 		ECI_Room_Name,
 		ECI_Client_Name,
+		ECI_Video_Fps,
 	//	ECI_Time_Zone,
 	//	ECI_Time_Adjust,
 	//	ECI_Log_DB_Host,

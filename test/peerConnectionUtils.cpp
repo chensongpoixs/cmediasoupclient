@@ -10,6 +10,7 @@
 #include "api/video_codecs/builtin_video_encoder_factory.h"
 #include <iostream>
 #include "desktop_capture.h"
+#include "ccfg.h"
 static rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> peerConnectionFactory{ nullptr };
 
 static rtc::scoped_refptr<webrtc::AudioSourceInterface> audioSource{ nullptr };
@@ -30,8 +31,13 @@ class CapturerTrackSource : public webrtc::VideoTrackSource
 public:
 	static rtc::scoped_refptr<CapturerTrackSource> Create()
 	{
+		uint32_t fps = webrtc::g_cfg.get_int32(webrtc::ECI_Video_Fps);
+		if (fps <= 0)
+		{
+			fps = 30;
+		}
 		std::unique_ptr<DesktopCapture> capturer =
-			absl::WrapUnique(DesktopCapture::Create(60, 0));
+			absl::WrapUnique(DesktopCapture::Create(fps, 0));
 		if (!capturer)
 		{
 			return nullptr;
