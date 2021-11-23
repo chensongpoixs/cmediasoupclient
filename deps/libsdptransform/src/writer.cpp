@@ -165,7 +165,7 @@ namespace sdptransform
 		size_t len = args.size();
 
 		linestream << type << "=";
-
+		bool audio_type = false;
 		for(
 			auto it = std::sregex_iterator(format.begin(), format.end(), FormatRegex);
 			it != std::sregex_iterator();
@@ -193,9 +193,19 @@ namespace sdptransform
 				else if (str == "%s" || str == "%d")
 				{
 					if (arg.is_string())
+					{
 						linestream << arg.get<std::string>();
+						if (arg.get<std::string>() == "opus")
+						{
+							audio_type = true;
+						}
+					}
 					else
+					{
 						linestream << arg;
+						
+					}
+					
 				}
 				else if (str == "%v")
 				{
@@ -203,7 +213,10 @@ namespace sdptransform
 				}
 			}
 		}
-
+		if (audio_type)
+		{
+			linestream << "/2";
+		}
 		linestream << "\r\n";
 
 		sdpstream << linestream.str();
