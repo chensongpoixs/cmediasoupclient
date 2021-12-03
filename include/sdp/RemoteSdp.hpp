@@ -18,7 +18,7 @@ namespace mediasoupclient
 				size_t idx;
 				std::string reuseMid;
 			};
-
+			~RemoteSdp();
 		public:
 			RemoteSdp(
 			  const nlohmann::json& iceParameters,

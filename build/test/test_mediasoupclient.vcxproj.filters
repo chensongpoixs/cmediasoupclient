@@ -25,6 +25,7 @@
     <ClCompile Include="..\..\test\ccfg.cpp" />
     <ClCompile Include="..\..\test\cnet_types.cpp" />
     <ClCompile Include="..\..\test\cint2str.cpp" />
+    <ClCompile Include="..\..\test\test\fake_audio_capture_module.cc" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\CMakeLists.txt" />
@@ -44,5 +45,9 @@
     <ClInclude Include="..\..\test\ccfg.h" />
     <ClInclude Include="..\..\test\cnet_types.h" />
     <ClInclude Include="..\..\test\cint2str.h" />
+    <ClInclude Include="..\..\test\test\fake_audio_capture_module.h" />
+    <ClInclude Include="..\..\test\test\fake_periodic_video_source.h" />
+    <ClInclude Include="..\..\test\test\fake_periodic_video_track_source.h" />
+    <ClInclude Include="..\..\test\test\frame_generator_capturer_video_track_source.h" />
   </ItemGroup>
 </Project>

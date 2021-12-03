@@ -191,7 +191,9 @@ namespace mediasoupclient
 			MSC_THROW_UNSUPPORTED_ERROR("cannot produce track kind");
 
 		if (codecOptions)
+		{
 			ortc::validateProducerCodecOptions(const_cast<json&>(*codecOptions));
+		}
 
 		std::string producerId;
 		std::vector<webrtc::RtpEncodingParameters> normalizedEncodings;
@@ -284,7 +286,7 @@ namespace mediasoupclient
 		auto dataChannelId =
 		  this->listener->OnProduceData(this, sendResult.sctpStreamParameters, label, protocol, appData);
 
-		auto dataProducer = new DataProducer(
+		auto* dataProducer = new DataProducer(
 		  this,
 		  dataProducerListener,
 		  dataChannelId.get(),

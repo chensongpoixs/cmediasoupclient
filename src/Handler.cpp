@@ -137,7 +137,7 @@ namespace mediasoupclient
 		// Update the remote DTLS role in the SDP.
 		std::string remoteDtlsRole = localDtlsRole == "client" ? "server" : "client";
 		this->remoteSdp->UpdateDtlsRole(remoteDtlsRole);
-
+		RTC_LOG(LS_INFO) << "DTLS TODO@chensong 2021-11-23  remoteDtlsRole = " << remoteDtlsRole;
 		// May throw.
 		this->privateListener->OnConnect(dtlsParameters);
 		this->transportReady = true;
@@ -198,7 +198,7 @@ namespace mediasoupclient
 		if (!transceiver)
 			MSC_THROW_ERROR("error creating transceiver");
 
-		transceiver->SetDirection(webrtc::RtpTransceiverDirection::kSendOnly);
+		transceiver->SetDirection(webrtc::RtpTransceiverDirection::kSendRecv);
 
 		std::string offer;
 		std::string localId;

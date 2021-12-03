@@ -412,7 +412,7 @@ namespace mediasoupclient
 	void PeerConnection::SetSessionDescriptionObserver::OnFailure(webrtc::RTCError error)
 	{
 		MSC_TRACE();
-
+		//error = "Failed to set remote answer sdp: Failed to set remote audio description send parameters."
 		MSC_WARN(
 		  "webtc::SetSessionDescriptionObserver failure [%s:%s]",
 		  webrtc::ToString(error.type()),
@@ -444,9 +444,12 @@ namespace mediasoupclient
 	{
 		MSC_TRACE();
 
+		// This callback should take the ownership of |desc|.
+		std::unique_ptr<webrtc::SessionDescriptionInterface> ownedDesc(desc);
+
 		std::string sdp;
 
-		desc->ToString(&sdp);
+		ownedDesc->ToString(&sdp);
 		this->promise.set_value(sdp);
 	};
 

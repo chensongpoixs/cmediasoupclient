@@ -31,7 +31,7 @@ namespace mediasoupclient
 					{ "netType",        "IN"                             },
 					{ "sessionId",      10000                            },
 					{ "sessionVersion", 0                                },
-					{ "username",       "libmediasoupclient"             }
+					{ "username",       "chensong"             }
 				}
 			},
 			{ "name", "-" },
@@ -74,6 +74,16 @@ namespace mediasoupclient
 			}
 		};
 		// clang-format on
+	}
+
+	Sdp::RemoteSdp::~RemoteSdp()
+	{
+		MSC_TRACE();
+
+		for (const auto* mediaSection : this->mediaSections)
+		{
+			delete mediaSection;
+		}
 	}
 
 	void Sdp::RemoteSdp::UpdateIceParameters(const json& iceParameters)
