@@ -36,29 +36,38 @@ DesktopCapture* DesktopCapture::Create(size_t target_fps,
 
 bool DesktopCapture::Init(size_t target_fps, size_t capture_screen_index) 
 {
-	// 窗口
-	//dc_ = webrtc::DesktopCapturer::CreateWindowCapturer(
-		//webrtc::DesktopCaptureOptions::CreateDefault());
-	//桌面
 	webrtc::DesktopCaptureOptions result;
 	result.set_allow_directx_capturer(true);
-	dc_ = webrtc::DesktopCapturer::CreateScreenCapturer(result);
+	// 窗口
+	dc_ = webrtc::DesktopCapturer::CreateWindowCapturer(result);
+		//webrtc::DesktopCaptureOptions::CreateDefault());
+	//桌面
+	
+	//dc_ = webrtc::DesktopCapturer::CreateScreenCapturer(result);
 
   if (!dc_)
     return false;
 
   webrtc::DesktopCapturer::SourceList sources;
   dc_->GetSourceList(&sources);
- /* int index = 0;
+  int index = 0;
+  FILE *out_file_ptr = fopen("chensong_desktop_capture.log", "wb+");
   for (const webrtc::DesktopCapturer::Source & source : sources)
   {
-	  if (source.title == "mediasoup-demo-server")
+	  fprintf(out_file_ptr, "[title = %s]\n", source.title.c_str());
+	  fflush(out_file_ptr);
+	  
+	  //if ("chensong.mp4 - PotPlayer" == source.title)
+	  //if ("rtmp://127.0.0.1/live/test - VLC media player" == source.title)
+	  if ("Prj_ChengDu (64-bit Development PCD3D_SM5) " == source.title)
 	  {
 		  capture_screen_index = index;
 		  break;
 	  }
 	  ++index;
-  }*/
+  }
+  fprintf(out_file_ptr, "[capture_screen_index = %d]\n", capture_screen_index);
+  fflush(out_file_ptr);
   if (capture_screen_index > sources.size()) {
     RTC_LOG(LS_WARNING) << "The total sources of screen is " << sources.size()
                         << ", but require source of index at "

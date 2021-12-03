@@ -21,11 +21,47 @@
     <ClCompile Include="..\..\test\wsclient.cpp" />
     <ClCompile Include="..\..\test\cwebsocket_mgr.cpp" />
     <ClCompile Include="..\..\test\peerConnectionUtils.cpp" />
-    <ClCompile Include="..\..\test\cconfig.cpp" />
     <ClCompile Include="..\..\test\ccfg.cpp" />
-    <ClCompile Include="..\..\test\cnet_types.cpp" />
-    <ClCompile Include="..\..\test\cint2str.cpp" />
     <ClCompile Include="..\..\test\test\fake_audio_capture_module.cc" />
+    <ClCompile Include="..\..\test\cmsg_header.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\cmsg_parse.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\cmsg_statistic.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\cmsg_statistic_reg.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\cgm_command.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\cplayer.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\cplayer_handler.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\crobot.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\crobot_cfg.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\crobot_client.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\csession.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\ctime_mgr.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\cmsg_dispatch.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\CMakeLists.txt" />
@@ -34,6 +70,12 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{92AF04AE-B3A4-3F2A-81FA-64B8AFC49089}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{9bc6ba00-1573-4e4a-a298-49a5ffb2e9c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client">
+      <UniqueIdentifier>{c02d8c60-867c-4eb0-b152-c53ef0a0f6d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\desktop_capture.h" />
@@ -41,13 +83,49 @@
     <ClInclude Include="..\..\test\wsclient.h" />
     <ClInclude Include="..\..\test\cwebsocket_mgr.h" />
     <ClInclude Include="..\..\test\peerConnectionUtils.hpp" />
-    <ClInclude Include="..\..\test\cconfig.h" />
     <ClInclude Include="..\..\test\ccfg.h" />
-    <ClInclude Include="..\..\test\cnet_types.h" />
-    <ClInclude Include="..\..\test\cint2str.h" />
     <ClInclude Include="..\..\test\test\fake_audio_capture_module.h" />
     <ClInclude Include="..\..\test\test\fake_periodic_video_source.h" />
     <ClInclude Include="..\..\test\test\fake_periodic_video_track_source.h" />
     <ClInclude Include="..\..\test\test\frame_generator_capturer_video_track_source.h" />
+    <ClInclude Include="..\..\test\cmsg_base_id.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cmsg_header.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cmsg_parse.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cmsg_statistic.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cgame_define.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cgm_command.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cmsg_dispatch.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\cplayer.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\crobot.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\crobot_cfg.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\crobot_client.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\csession.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\test\ctime_mgr.h">
+      <Filter>client</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

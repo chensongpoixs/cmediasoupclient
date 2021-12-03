@@ -102,8 +102,8 @@ std::future<void> Broadcaster::OnConnectSendTransport(const json& dtlsParameters
 	}*/
 
 
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl + "/broadcasters/" + this->id + "/transports/" +
 		this->sendTransport->GetId() + "/connect";
 	auto res = cli.Post(url.c_str(), body.dump(), "application/json");
@@ -158,8 +158,8 @@ std::future<void> Broadcaster::OnConnectRecvTransport(const json& dtlsParameters
 	}
 */
 
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl +"/broadcasters/" + this->id + "/transports/" +
 		this->recvTransport->GetId() + "/connect" ;
 	auto res = cli.Post(url.c_str(), body.dump(), "application/json");
@@ -253,8 +253,8 @@ std::future<std::string> Broadcaster::OnProduce(
 */
 
 
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl + "/broadcasters/" + this->id + "/transports/" +
 		this->sendTransport->GetId() + "/producers"  ;
 	auto res = cli.Post(url.c_str(), body.dump(), "application/json");
@@ -345,8 +345,8 @@ std::future<std::string> Broadcaster::OnProduceData(
 
 		promise.set_exception(std::make_exception_ptr(r.text));
 	}*/
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl + "/broadcasters/" + this->id + "/transports/" +
 		this->sendTransport->GetId() + "/produce/data" ;
 	auto res = cli.Post(url.c_str(), body.dump(), "application/json");
@@ -430,8 +430,8 @@ void Broadcaster::Start(
 
 		return;
 	}*/
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl +  "/broadcasters"  ;
 	auto res = cli.Post(url.c_str(), body.dump(), "application/json");
 	if (!res)
@@ -479,8 +479,8 @@ void Broadcaster::CreateDataConsumer(const json& body)
 		          << " [status code:" << r.status_code << ", body:\"" << r.text << "\"]" << std::endl;
 		return;
 	}*/
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl +"/broadcasters/" + this->id + "/transports/" +
 		this->recvTransport->GetId() + "/consume/data";
 	auto res = cli.Post(url.c_str(), body.dump(), "application/json");
@@ -554,8 +554,8 @@ void Broadcaster::CreateSendTransport(bool enableAudio, bool useSimulcast)
 
 		return;
 	}*/
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl + "/broadcasters/" + this->id + "/transports" ;
 	auto res = cli.Post(url.c_str(), body.dump(), "application/json");
 	if (!res)
@@ -765,8 +765,8 @@ void Broadcaster::CreateRecvTransport()
 	}*/
 
 
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl + "/broadcasters/" + this->id + "/transports" ;
 	auto res = cli.Post(url.c_str(), body.dump(), "application/json");
 	if (!res)
@@ -854,6 +854,7 @@ void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const w
 
 		std::cout << "[INFO] received chat data: " + s << std::endl;
 	}
+	return;
 	json response;
 	try
 	{
@@ -895,8 +896,8 @@ void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const w
 		return;
 	}
 	EACTION_MOUSE_TYPE event = static_cast<EACTION_MOUSE_TYPE>(response["event"]);
-	double wight = response["wight"];
-	double height = response["height"];
+	double wight = response["wight"] ;
+	double height = response["height"]  ;
 	double windowwidth =  response["windowwidth"];
 	double windowheight =  response["windowheight"];
 	if (wight < 0 || height < 0 || windowwidth < 0 || windowheight < 0)
@@ -956,8 +957,8 @@ void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const w
 	static uint64_t HT = 100000;
 	double wx = (wight / windowwidth) * HT ;
 	double hy = height / windowheight * HT;
-	double  x = (wx * m_wight)/HT;
-	double y = (hy * m_height)/HT;
+	double  x = ((wx * m_wight)/HT) + 1920;
+	double y = ((hy * m_height)/HT) + 1080;
 	RTC_LOG(LS_INFO) << "wight = " << wight << ", height = " << height << ", windowwidth = " << windowwidth << ", windowheight = " << windowheight;
 	RTC_LOG(LS_INFO) << "wx = " << wx << ", hy = " << hy <<"x = " << x << ", y = " << y;
 	mouse_event(action, x * 65535 / m_wight, y * 65535 / m_height, 0, 0 );
@@ -987,8 +988,8 @@ void Broadcaster::Stop()
 	  cpr::Url{ this->baseUrl + "/broadcasters/" + this->id }, cpr::VerifySsl{ verifySsl })
 	  .get();*/
 
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host =chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl +"/broadcasters/" + this->id ;
 	auto res = cli.Get(url.c_str());
 	if (!res)

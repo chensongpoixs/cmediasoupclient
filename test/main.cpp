@@ -179,16 +179,33 @@ obj/third_party/libvpx/libvpx_yasm.lib
 #include "ccfg.h"
 #include <WinUser.h>
 #include <Windows.h>
-
-
-
+#include "crobot.h"
 using json = nlohmann::json;
 Broadcaster broadcaster;
 bool stoped = false;
+void Stop(int i)
+{
+	chen::g_rotbot.stop();
+	RTC_LOG(LS_INFO) << "[INFO] interrupt signal (signum) received";
+	chen::g_websocket_mgr.destroy();
+	// Remove broadcaster from the server.
+	broadcaster.Stop();
+	RTC_LOG(LS_INFO) << "[INFO] leaving!" ;
+	stoped = true;
+}
+
+void RegisterSignal()
+{
+	signal(SIGINT, Stop);
+	signal(SIGTERM, Stop);
+}
+
+
+
 void signalHandler(int signum)
 {
 	RTC_LOG(LS_INFO) << "[INFO] interrupt signal (" << signum << ") received";
-	webrtc::g_websocket_mgr.destroy();
+	chen::g_websocket_mgr.destroy();
 	// Remove broadcaster from the server.
 	broadcaster.Stop();
 	RTC_LOG(LS_INFO) << "[INFO] leaving!" ;
@@ -536,8 +553,8 @@ void start_kill()
 	PROCESS_INFORMATION pi = { 0 };
 	//// C:/Users/Public/Nwt/cache/recv/DESKTOP-QL/JJ202111121500/WindowsNoEditor/Prj_ChengDu.exe
 	////TCHAR szApp[MAX_PATH] = { _T("D:/Work/cmedia_server/webrtc_google/libmediasoupclient/build/test/Debug/test_mediasoupclient.exe  D:/Work/cmedia_server/webrtc_google/libmediasoupclient/build/test/Debug/client.cfg") };
-	////char * szApp = "C:/Users/Public/Nwt/cache/recv/DESKTOP-QL/JJ202111121500/WindowsNoEditor/Prj_ChengDu.exe";
-	TCHAR  szApp[MAX_PATH] = { L"D:/Work/cmedia_server/webrtc_google/src/out/test_vs2017_debug/peerconnection_desktop.exe" };
+	TCHAR  szApp[MAX_PATH] = { L"C:/Users/Public/Nwt/cache/recv/DESKTOP-QL/JJ202111121500/WindowsNoEditor/Prj_ChengDu.exe" };
+	//TCHAR  szApp[MAX_PATH] = { L"D:/Work/cmedia_server/webrtc_google/src/out/test_vs2017_debug/peerconnection_desktop.exe" };
 	//TCHAR szCmdLine[MAX_PATH] = {
 	//	L"C:\\Windows\\System32\\rundll32.exe"
 	//	L" D:\\Test.dll,TestFunc" // 注意前面的空格
@@ -550,7 +567,7 @@ void start_kill()
 
 
 	std::this_thread::sleep_for(std::chrono::seconds(3));
-	killProcessByName("peerconnection_desktop.exe");
+	//killProcessByName("peerconnection_desktop.exe");
 }
 //int main()
 //{
@@ -558,13 +575,96 @@ void start_kill()
 //	return 0;
 //}
 #include <Windows.h>
+
+//static BOOL CALLBACK MonitorEnum(HMONITOR hMon, HDC hdc, LPRECT lprcMonitor, LPARAM pData)
+//{
+//	cout << "hmonitor:" << hMon << endl;
+//
+//	DWORD cPhysicalMonitors;
+//	BOOL bSuccess = GetNumberOfPhysicalMonitorsFromHMONITOR(hMon, &cPhysicalMonitors);
+//	cout << "GetNumber: " << bSuccess << ", number of physical monitors: " << cPhysicalMonitors << endl;
+//
+//	LPPHYSICAL_MONITOR pPhysicalMonitors = (LPPHYSICAL_MONITOR)malloc(cPhysicalMonitors * sizeof(PHYSICAL_MONITOR));
+//	bSuccess = GetPhysicalMonitorsFromHMONITOR(hMon, cPhysicalMonitors, pPhysicalMonitors);
+//	cout << "GetPhysicalMonitor: " << bSuccess << endl
+//		<< "Handle: " << pPhysicalMonitors->hPhysicalMonitor << endl
+//		<< "Description: ";
+//	wcout << (WCHAR*)(pPhysicalMonitors->szPhysicalMonitorDescription) << endl;;
+//
+//	D(pPhysicalMonitors->hPhysicalMonitor);
+//
+//	DestroyPhysicalMonitors(cPhysicalMonitors, pPhysicalMonitors);
+//	free(pPhysicalMonitors);
+//
+//	cout << "---------------------------------------" << endl;
+//
+//	return TRUE;
+//}
+
+void A()
+{
+	HWND hWnd = GetDesktopWindow();
+	//EnumDisplayMonitors(0, 0, MonitorEnum, NULL);
+	HMONITOR hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTOPRIMARY);
+	std::cout << "---------------------------------------" << std::endl;
+	std::cout << "AMonitor: " << hMonitor << std::endl;  
+
+}
+void B()
+{
+	DWORD DispNum = 0;
+	DISPLAY_DEVICE DisplayDevice;
+	// Initialize DisplayDevice.
+	ZeroMemory(&DisplayDevice, sizeof(DisplayDevice));
+	DisplayDevice.cb = sizeof(DisplayDevice);
+
+	while ((EnumDisplayDevices(NULL, DispNum, &DisplayDevice, 0)))
+	{
+		std::wstring deviceName = DisplayDevice.DeviceName;
+		DISPLAY_DEVICE DisplayDeviceM;
+		ZeroMemory(&DisplayDeviceM, sizeof(DisplayDeviceM));
+		DisplayDeviceM.cb = sizeof(DisplayDeviceM);
+		int monitorIndex = 0;
+		while (EnumDisplayDevices(deviceName.c_str(), monitorIndex, &DisplayDeviceM, EDD_GET_DEVICE_INTERFACE_NAME))
+		{
+			std::wstring monitorID = DisplayDeviceM.DeviceID;
+			std::wstring DeviceName = DisplayDeviceM.DeviceName;
+			std::wcout <<"monitorID :"<< monitorID << ", DeviceName = " << DeviceName<< std::endl;
+			++monitorIndex;            
+		}
+		DispNum++;
+	}
+	std::cout << "---------------------------------------" << std::endl;
+}
+
+void config_name( )
+{
+	//RegisterSignal();
+	const char* config_filename = "client.cfg";
+	
+	const char* log_path = "./";
+	
+	bool init = chen::g_rotbot.init(log_path, config_filename);
+
+	if (init)
+	{
+		init = chen::g_rotbot.Loop();
+	}
+
+	chen::g_rotbot.destroy();
+
+	
+}
+
 int main(int argc, char* argv[])
 {
-
+	/*A();
+	B();
+	return 0;*/
 	
 	//system("D:/Work/cmedia_server/webrtc_google/src/out/test_vs2017_debug/peerconnection_desktop.exe");
 //	test_win();
-	return 0;
+	//return 0;
 	/*for (int i = 0; i < 10; ++i)
 	{
 		HDC desktopDc = GetDC(NULL);
@@ -631,31 +731,32 @@ int main(int argc, char* argv[])
 		++sum;
 		::Sleep(100);
 	}*/
-	signal(SIGINT, signalHandler);
+	//start_kill();
+	//signal(SIGINT, signalHandler);
+	RegisterSignal();
 	const char* config_filename = "client.cfg";
 	if (argc > 1)
 	{
 		config_filename = argv[1];
 	}
-	bool init = webrtc::g_cfg.init(config_filename);
+	bool init = chen::g_cfg.init(config_filename);
 	if (!init)
 	{
 		RTC_LOG(LS_ERROR) << "config init failed !!!" << config_filename;
 		return -1;
 	}
-	webrtc::g_cfg.show();
-	webrtc::g_cfg.show();
-	std::string ws_url = "ws://" + webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host)+ ":" + std::to_string(webrtc::g_cfg.get_int32(webrtc::ECI_MediaSoup_Http_Port)) +"/?roomId="+webrtc::g_cfg.get_string(webrtc::ECI_Room_Name) +"&peerId=" + webrtc::g_cfg.get_string(webrtc::ECI_Client_Name);//ws://127.0.0.1:8888/?roomId=chensong&peerId=xiqhlyrn", "http://127.0.0.1:8888")
-	std::string origin = "http://" + webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host)+ ":" + std::to_string(webrtc::g_cfg.get_int32(webrtc::ECI_MediaSoup_Http_Port)) ;
-	if (!webrtc::g_websocket_mgr.init(ws_url, origin))
+	
+	std::string ws_url = "ws://" + chen::g_cfg.get_string(chen::ECI_MediaSoup_Host)+ ":" + std::to_string(chen::g_cfg.get_int32(chen::ECI_MediaSoup_Http_Port)) +"/?roomId="+chen::g_cfg.get_string(chen::ECI_Room_Name) +"&peerId=" + chen::g_cfg.get_string(chen::ECI_Client_Name);//ws://127.0.0.1:8888/?roomId=chensong&peerId=xiqhlyrn", "http://127.0.0.1:8888")
+	std::string origin = "http://" + chen::g_cfg.get_string(chen::ECI_MediaSoup_Host)+ ":" + std::to_string(chen::g_cfg.get_int32(chen::ECI_MediaSoup_Http_Port)) ;
+	if (!chen::g_websocket_mgr.init(ws_url, origin))
 	{
 		RTC_LOG(LS_ERROR) << "weboscket connect failed !!! url = " << ws_url;
 		return -1;
 	}
-	webrtc::g_websocket_mgr.start();
+	chen::g_websocket_mgr.start();
 	uint64_t id = 34;
 	bool send = false;
-	while (webrtc::g_websocket_mgr.get_status() != webrtc::CWEBSOCKET_MESSAGE)
+	while (chen::g_websocket_mgr.get_status() != chen::CWEBSOCKET_MESSAGE)
 	{
 		//RTC_LOG(LS_INFO) << "websocket connect .... 100 ";
 		/*{
@@ -708,10 +809,10 @@ int main(int argc, char* argv[])
 	const char* envWebrtcDebug  = std::getenv("WEBRTC_DEBUG");
 	const char* envVerifySsl    = std::getenv("VERIFY_SSL");
 	const char * envServerUrl = origin.c_str();
-	std::string room_name =  webrtc::g_cfg.get_string(webrtc::ECI_Room_Name);
+	std::string room_name =  chen::g_cfg.get_string(chen::ECI_Room_Name);
 	const char * envRoomId = room_name.c_str();
 	const char * envEnableAudio = "true";
-	std::string client_name = webrtc::g_cfg.get_string(webrtc::ECI_Client_Name);
+	std::string client_name = chen::g_cfg.get_string(chen::ECI_Client_Name);
 	const char * name =  client_name.c_str();
 	const char* envUseSimulcast = "false";
 	if (envServerUrl == nullptr)
@@ -779,8 +880,8 @@ int main(int argc, char* argv[])
 	{
 		std::cout << "[INFO] found room" << envRoomId << std::endl;
 	}*/
-	std::string host =webrtc::g_cfg.get_string(webrtc::ECI_MediaSoup_Host) ;
-	httplib::Client cli(host, webrtc::g_cfg.get_uint32(webrtc::ECI_MediaSoup_Http_Port));
+	std::string host = chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
+	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl;
 	auto res = cli.Get(url.c_str());
 	if (!res)
@@ -809,6 +910,10 @@ int main(int argc, char* argv[])
 	std::cout << "[INFO] press Ctrl+C or Cmd+C to leave..." << std::endl;
 	std::string new_url  =  url + "/chensong";
 	std::set<std::string> dataProduceIds;
+
+	std::thread(
+	&config_name
+	).detach();
 	while (!stoped)
 	{
 		//broadcaster.createDataConsumer();

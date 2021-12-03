@@ -11,6 +11,16 @@
 #include <iostream>
 #include "desktop_capture.h"
 #include "ccfg.h"
+#include "pc/test/fake_audio_capture_module.h"
+#include "pc/test/fake_periodic_video_track_source.h"
+#include "pc/test/frame_generator_capturer_video_track_source.h"
+#include "system_wrappers/include/clock.h"
+#include "api/audio_codecs/builtin_audio_decoder_factory.h"
+#include "api/audio_codecs/builtin_audio_encoder_factory.h"
+#include "api/create_peerconnection_factory.h"
+#include "api/video_codecs/builtin_video_decoder_factory.h"
+#include "api/video_codecs/builtin_video_encoder_factory.h"
+#include "test/fake_audio_capture_module.h"
 static rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> peerConnectionFactory{ nullptr };
 
 static rtc::scoped_refptr<webrtc::AudioSourceInterface> audioSource{ nullptr };
@@ -21,6 +31,9 @@ static rtc::scoped_refptr<webrtc::VideoCaptureModule> videoCaptureModule;
 //static rtc::scoped_refptr<CapturerTrackSource> videoDevice{ nullptr };
 class CapturerTrackSource;
 static rtc::scoped_refptr<CapturerTrackSource> videoDevice{ nullptr };
+
+
+static rtc::Thread* networkThread{ nullptr };
 static rtc::Thread* signalingThread{ nullptr };
 static rtc::Thread* workerThread{ nullptr };
 
@@ -31,7 +44,7 @@ class CapturerTrackSource : public webrtc::VideoTrackSource
 public:
 	static rtc::scoped_refptr<CapturerTrackSource> Create()
 	{
-		uint32_t fps = webrtc::g_cfg.get_int32(webrtc::ECI_Video_Fps);
+		uint32_t fps = chen::g_cfg.get_int32(chen::ECI_Video_Fps);
 		if (fps <= 0)
 		{
 			fps = 30;
@@ -85,23 +98,28 @@ static void createPeerConnectionFactory()
 	std::cout << "[INFO] peerConnectionUtils.createPeerConnectionFactory()" << std::endl;
 
 	webrtc::PeerConnectionInterface::RTCConfiguration config;
-
+	networkThread = new rtc::Thread();
 	signalingThread = new rtc::Thread();
 	workerThread    = new rtc::Thread();
 
+	networkThread->SetName("network_thread", nullptr);
 	signalingThread->SetName("signaling_thread", nullptr);
 	workerThread->SetName("worker_thread", nullptr);
 
-	if (!signalingThread->Start() || !workerThread->Start())
+	if (!networkThread->Start() ||!signalingThread->Start() || !workerThread->Start())
 	{
 		throw std::runtime_error("Thread start errored");
 	}
-
+	auto fakeAudioCaptureModule = cFakeAudioCaptureModule::Create();
+	if (!fakeAudioCaptureModule)
+	{
+		RTC_LOG(LS_ERROR) << "audio capture module creation errored";
+	}
 	peerConnectionFactory = webrtc::CreatePeerConnectionFactory(
-	  workerThread,
+		networkThread,
 	  workerThread,
 	  signalingThread,
-	  nullptr /*default_adm*/,
+		fakeAudioCaptureModule /*nullptr*/ /*default_adm*/,
 	  webrtc::CreateBuiltinAudioEncoderFactory(),
 	  webrtc::CreateBuiltinAudioDecoderFactory(),
 	  webrtc::CreateBuiltinVideoEncoderFactory(),
@@ -115,12 +133,15 @@ static void createAudioSource()
 {
 	std::cout << "[INFO] peerConnectionUtils.createAudiosource()" << std::endl;
 
-	cricket::AudioOptions options;
+	//cricket::AudioOptions options;
 
 	if (peerConnectionFactory == nullptr)
+	{
 		createPeerConnectionFactory();
-
-	audioSource = peerConnectionFactory->CreateAudioSource(options);
+	}
+	cricket::AudioOptions options;
+	options.highpass_filter = false;
+	audioSource = peerConnectionFactory->CreateAudioSource(options/*options*/);
 }
 
 // Audio track creation.
@@ -129,7 +150,9 @@ rtc::scoped_refptr<webrtc::AudioTrackInterface> createAudioTrack(const std::stri
 	std::cout << "[INFO] peerConnectionUtils.createAudioTrack()" << std::endl;
 
 	if (audioSource == nullptr)
+	{
 		createAudioSource();
+	}
 
 	return peerConnectionFactory->CreateAudioTrack(label, audioSource);
 }
@@ -140,10 +163,14 @@ rtc::scoped_refptr<webrtc::VideoTrackInterface> createVideoTrack(const std::stri
 	std::cout << "[INFO] peerConnectionUtils.createVideoTrack()" << std::endl;
 
 	if (peerConnectionFactory == nullptr)
+	{
 		createPeerConnectionFactory();
+	}
 
 	if (videoDevice == nullptr)
+	{
 		videoDevice = CapturerTrackSource::Create(); //CapturerTrackSource::Create();
+	}
 
 	return peerConnectionFactory->CreateVideoTrack(label, videoDevice);
 }

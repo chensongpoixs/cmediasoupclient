@@ -100,7 +100,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <UseFullPaths>false</UseFullPaths>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WEBRTC_WIN=1;_ITERATOR_DEBUG_LEVEL=0;_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;USE_AURA=1;NO_TCMALLOC;FULL_SAFE_BROWSING;SAFE_BROWSING_CSD;SAFE_BROWSING_DB_LOCAL;CHROMIUM_BUILD;_HAS_EXCEPTIONS=0;__STD_C;_CRT_RAND_S;_CRT_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_DEPRECATE;_ATL_NO_OPENGL;_WINDOWS;CERT_CHAIN_PARA_HAS_EXTRA_FIELDS;PSAPI_VERSION=2;WIN32;_SECURE_ATL;_USING_V110_SDK71_;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;_UNICODE;UNICODE;NTDDI_VERSION=NTDDI_WIN10_RS2;_WIN32_WINNT=0x0A00;WINVER=0x0A00;_DEBUG;DYNAMIC_ANNOTATIONS_ENABLED=1;WTF_USE_DYNAMIC_ANNOTATIONS=1;_HAS_ITERATOR_DEBUGGING=0;WEBRTC_ENABLE_PROTOBUF=1;WEBRTC_INCLUDE_INTERNAL_AUDIO_DEVICE;RTC_ENABLE_VP9;HAVE_SCTP;WEBRTC_NON_STATIC_TRACE_EVENT_HANDLERS=1;ABSL_ALLOCATOR_NOTHROW=1;GTEST_API_=;GTEST_HAS_POSIX_RE=0;GTEST_LANG_CXX11=1;GTEST_HAS_TR1_TUPLE=0;GTEST_HAS_ABSL=1;HAVE_WEBRTC_VIDEO;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_WINSOCK_DEPRECATED_NO_WARNINGS;_WINDOWS;WEBRTC_WIN=1;NOMINMAX;USE_AURA=1;NO_TCMALLOC;FULL_SAFE_BROWSING;SAFE_BROWSING_CSD;SAFE_BROWSING_DB_LOCAL;CHROMIUM_BUILD;_HAS_EXCEPTIONS=0;__STD_C;_CRT_RAND_S;_CRT_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_DEPRECATE;_ATL_NO_OPENGL;CERT_CHAIN_PARA_HAS_EXTRA_FIELDS;PSAPI_VERSION=2;WIN32;_SECURE_ATL;_USING_V110_SDK71_;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;_UNICODE;UNICODE;NTDDI_VERSION=NTDDI_WIN10_RS2;_WIN32_WINNT=0x0A00;WINVER=0x0A00;_DEBUG;DYNAMIC_ANNOTATIONS_ENABLED=1;WTF_USE_DYNAMIC_ANNOTATIONS=1;_HAS_ITERATOR_DEBUGGING=0;WEBRTC_ENABLE_PROTOBUF=1;WEBRTC_INCLUDE_INTERNAL_AUDIO_DEVICE;RTC_ENABLE_VP9;HAVE_SCTP;WEBRTC_NON_STATIC_TRACE_EVENT_HANDLERS=1;ABSL_ALLOCATOR_NOTHROW=1;GTEST_API_=;GTEST_HAS_POSIX_RE=0;GTEST_LANG_CXX11=1;GTEST_HAS_TR1_TUPLE=0;GTEST_HAS_ABSL=1;HAVE_WEBRTC_VIDEO;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <ResourceCompile>
@@ -116,7 +116,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>libboost_chrono-vc140-mt-gd-1_60.lib;libboost_date_time-vc140-mt-gd-1_60.lib;libboost_filesystem-vc140-mt-gd-1_60.lib;libboost_locale-vc140-mt-gd-1_60.lib;libboost_regex-vc140-mt-gd-1_60.lib;libboost_system-vc140-mt-gd-1_60.lib;libboost_thread-vc140-mt-gd-1_60.lib;libprotobuf-lited.lib;libprotobufd.lib;libprotocd.lib;..\libsdptransform\Debug\sdptransform.lib;obj/webrtc.lib;advapi32.lib;comdlg32.lib;dbghelp.lib;dnsapi.lib;gdi32.lib;msimg32.lib;odbc32.lib;odbccp32.lib;oleaut32.lib;shell32.lib;shlwapi.lib;user32.lib;usp10.lib;uuid.lib;version.lib;wininet.lib;winmm.lib;winspool.lib;ws2_32.lib;delayimp.lib;kernel32.lib;ole32.lib;crypt32.lib;iphlpapi.lib;secur32.lib;dmoguids.lib;wmcodecdspuuid.lib;amstrmid.lib;msdmo.lib;strmiids.lib;d3d11.lib;dxgi.lib;..\Debug\mediasoupclient.lib</AdditionalDependencies>
+      <AdditionalDependencies>libboost_chrono-vc140-mt-gd-1_60.lib;libboost_date_time-vc140-mt-gd-1_60.lib;libboost_filesystem-vc140-mt-gd-1_60.lib;libboost_locale-vc140-mt-gd-1_60.lib;libboost_regex-vc140-mt-gd-1_60.lib;libboost_system-vc140-mt-gd-1_60.lib;libboost_thread-vc140-mt-gd-1_60.lib;D:\Work\crobot\Server\clib\build\Debug\clib.lib;..\libsdptransform\Debug\sdptransform.lib;obj/webrtc.lib;advapi32.lib;comdlg32.lib;dbghelp.lib;dnsapi.lib;gdi32.lib;msimg32.lib;odbc32.lib;odbccp32.lib;oleaut32.lib;shell32.lib;shlwapi.lib;user32.lib;usp10.lib;uuid.lib;version.lib;wininet.lib;winmm.lib;winspool.lib;ws2_32.lib;delayimp.lib;kernel32.lib;ole32.lib;crypt32.lib;iphlpapi.lib;secur32.lib;dmoguids.lib;wmcodecdspuuid.lib;amstrmid.lib;msdmo.lib;strmiids.lib;d3d11.lib;dxgi.lib;..\Debug\mediasoupclient.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -318,9 +318,19 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\test\ccfg.cpp" />
-    <ClCompile Include="..\..\test\cconfig.cpp" />
-    <ClCompile Include="..\..\test\cint2str.cpp" />
-    <ClCompile Include="..\..\test\cnet_types.cpp" />
+    <ClCompile Include="..\..\test\cgm_command.cpp" />
+    <ClCompile Include="..\..\test\cmsg_dispatch.cpp" />
+    <ClCompile Include="..\..\test\cmsg_header.cpp" />
+    <ClCompile Include="..\..\test\cmsg_parse.cpp" />
+    <ClCompile Include="..\..\test\cmsg_statistic.cpp" />
+    <ClCompile Include="..\..\test\cmsg_statistic_reg.cpp" />
+    <ClCompile Include="..\..\test\cplayer.cpp" />
+    <ClCompile Include="..\..\test\cplayer_handler.cpp" />
+    <ClCompile Include="..\..\test\crobot.cpp" />
+    <ClCompile Include="..\..\test\crobot_cfg.cpp" />
+    <ClCompile Include="..\..\test\crobot_client.cpp" />
+    <ClCompile Include="..\..\test\csession.cpp" />
+    <ClCompile Include="..\..\test\ctime_mgr.cpp" />
     <ClCompile Include="..\..\test\cwebsocket_mgr.cpp" />
     <ClCompile Include="..\..\test\desktop_capture.cc" />
     <ClCompile Include="..\..\test\desktop_capture_source.cc" />
@@ -351,9 +361,19 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\test\ccfg.h" />
-    <ClInclude Include="..\..\test\cconfig.h" />
-    <ClInclude Include="..\..\test\cint2str.h" />
-    <ClInclude Include="..\..\test\cnet_types.h" />
+    <ClInclude Include="..\..\test\cgame_define.h" />
+    <ClInclude Include="..\..\test\cgm_command.h" />
+    <ClInclude Include="..\..\test\cmsg_base_id.h" />
+    <ClInclude Include="..\..\test\cmsg_dispatch.h" />
+    <ClInclude Include="..\..\test\cmsg_header.h" />
+    <ClInclude Include="..\..\test\cmsg_parse.h" />
+    <ClInclude Include="..\..\test\cmsg_statistic.h" />
+    <ClInclude Include="..\..\test\cplayer.h" />
+    <ClInclude Include="..\..\test\crobot.h" />
+    <ClInclude Include="..\..\test\crobot_cfg.h" />
+    <ClInclude Include="..\..\test\crobot_client.h" />
+    <ClInclude Include="..\..\test\csession.h" />
+    <ClInclude Include="..\..\test\ctime_mgr.h" />
     <ClInclude Include="..\..\test\cwebsocket_mgr.h" />
     <ClInclude Include="..\..\test\desktop_capture.h" />
     <ClInclude Include="..\..\test\desktop_capture_source.h" />

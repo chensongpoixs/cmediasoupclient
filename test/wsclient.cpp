@@ -74,7 +74,9 @@
 #include "rtc_base/logging.h"
 #include "wsclient.h"
 #include <iostream>
-#include "cint2str.h"
+
+#include <cdigit2str.h>
+#include <cstr2digit.h>
 namespace { // private module-only namespace
 
 using wsclient::WebSocketCallback;
@@ -223,13 +225,13 @@ class _RealWebSocket : public wsclient::WebSocket
 
 			std::ostringstream cmd;
 			std::ostringstream strcmd;
-			for (const  uint8_t& value : rxbuf)
-			{
-				//printf("%2X")
-				cmd <<", " << webrtc::hexmem(&value, sizeof(uint8_t)) ;
-				strcmd << value;
-				//std::hex(value);
-			}
+			//for (const  uint8_t& value : rxbuf)
+			//{
+			//	//printf("%2X")
+			//	cmd <<", " << chen::hexmem(&value, sizeof(uint8_t)) ;
+			//	strcmd << value;
+			//	//std::hex(value);
+			//}
 
 			RTC_LOG(LS_INFO) << "websocket recv data = " << cmd.str().c_str() << ", recv data size = " << ret ;
 			RTC_LOG(LS_INFO) << "websocket [recv data = " << strcmd.str().c_str() << "]";

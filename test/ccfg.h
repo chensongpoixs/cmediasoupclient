@@ -9,8 +9,9 @@
 #define _C_CFG_H_
 //#include "cconfig.h"
 #include "cconfig.h"
+#include <cconfig.h>
 //#include "csingleton.h"
-namespace webrtc {
+namespace chen {
 	enum ECNGIndex
 	{
 		ECI_MediaSoup_Host = 0,
@@ -30,7 +31,7 @@ namespace webrtc {
 	//	ECI_LogPoolSize,
 		ECI_Max,
 	};
-	class ccfg : public cconfig
+	class ccfg : public chen::cconfig
 	{
 	public:
 	    explicit	ccfg();
