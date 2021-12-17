@@ -19,9 +19,9 @@
 namespace chen {
 	class csession;   //告诉编译编译器 要先编译clan_session文件再编译cplayer
 	//class cmgr_base;
-	class cfriend_circle_table_mgr; // C++ 里面编译是比较奇葩的事情
-	class ctest_case_mgr;
-	class cmatch_game_mgr;
+	//class cfriend_circle_table_mgr; // C++ 里面编译是比较奇葩的事情
+	//class ctest_case_mgr;
+	//class cmatch_game_mgr;
 	class cplayer : private cnoncopyable
 	{
 	public:

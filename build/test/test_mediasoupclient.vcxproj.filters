@@ -62,6 +62,7 @@
     <ClCompile Include="..\..\test\cmsg_dispatch.cpp">
       <Filter>client</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\capture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\CMakeLists.txt" />
@@ -127,5 +128,6 @@
     <ClInclude Include="..\..\test\ctime_mgr.h">
       <Filter>client</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\test\capture.h" />
   </ItemGroup>
 </Project>

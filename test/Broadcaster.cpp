@@ -14,7 +14,7 @@
 #include "ccfg.h"
 #include "peerConnectionUtils.hpp"
 using json = nlohmann::json;
-
+Broadcaster broadcaster;
 
 enum EACTION_MOUSE_TYPE
 {

@@ -167,6 +167,7 @@ obj/third_party/libvpx/libvpx.lib
 obj/third_party/libvpx/libvpx_yasm.lib
 ..\Debug\mediasoupclient.lib
 */
+#include "windows.h"
 #include "Broadcaster.hpp"
 #include "mediasoupclient.hpp"
 //#include <cpr/cpr.h>
@@ -180,9 +181,18 @@ obj/third_party/libvpx/libvpx_yasm.lib
 #include <WinUser.h>
 #include <Windows.h>
 #include "crobot.h"
+#include <osg/LightSource>
+#include <chrono>
+#include <iostream>
+#include <osg/Camera>
+#include <osgViewer/Viewer>
+#include <osgDB/ReadFile>
+#include <osg/ComputeBoundsVisitor>
+#include <osgviewer/viewereventhandlers>
 using json = nlohmann::json;
-Broadcaster broadcaster;
 bool stoped = false;
+
+
 void Stop(int i)
 {
 	chen::g_rotbot.stop();
@@ -196,8 +206,8 @@ void Stop(int i)
 
 void RegisterSignal()
 {
-	signal(SIGINT, Stop);
-	signal(SIGTERM, Stop);
+	//signal(SIGINT, Stop);
+	//signal(SIGTERM, Stop);
 }
 
 
@@ -658,81 +668,6 @@ void config_name( )
 
 int main(int argc, char* argv[])
 {
-	/*A();
-	B();
-	return 0;*/
-	
-	//system("D:/Work/cmedia_server/webrtc_google/src/out/test_vs2017_debug/peerconnection_desktop.exe");
-//	test_win();
-	//return 0;
-	/*for (int i = 0; i < 10; ++i)
-	{
-		HDC desktopDc = GetDC(NULL);
-		printf("hdc = %p\n", desktopDc);
-	}
-	get_display();
-	maintest();
-	system("pause");
-	return 0;*/
-	//get_display();
-	/*test_promise();
-
-	return 0;*/
-
-
-	//ACCESS_MASK desired_access = DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
-	//	DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
-	//	DESKTOP_WRITEOBJECTS | DESKTOP_READOBJECTS |
-	//	DESKTOP_SWITCHDESKTOP | GENERIC_WRITE;
-	//HDESK hDesk = ::OpenDesktopW((LPWSTR)"1234567890", 0, FALSE, desired_access);
-	////HDESK hDesk =  ::CreateDesktop(_T("123456789"), NULL, NULL, DF_ALLOWOTHERACCOUNTHOOK, GENERIC_ALL, NULL);
-	//assert(hDesk);
-	// Register signal SIGINT and signal handler.
-	//test_win();
-	//return 0;
-	/*test_scroll();
-	return 0;*/
-	{}
-	//HDESK hDesk1 = ::CreateDesktop((LPWSTR)"1234567890", NULL, NULL, DF_ALLOWOTHERACCOUNTHOOK, GENERIC_ALL, NULL);
-	//assert(hDesk1);
-	//HDESK hDesktopToSwitch = ::OpenDesktop((LPWSTR)"1234567890", DF_ALLOWOTHERACCOUNTHOOK, TRUE, GENERIC_ALL);
-	//assert(hDesktopToSwitch);
-	STARTUPINFO si = { sizeof(si) };
-	//si.lpDesktop = (LPWSTR)"1234567890";
-	si.dwFlags = STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_SHOWMAXIMIZED;
-	//PROCESS_INFORMATION pi = { 0 };
-	//// C:/Users/Public/Nwt/cache/recv/DESKTOP-QL/JJ202111121500/WindowsNoEditor/Prj_ChengDu.exe
-	////TCHAR szApp[MAX_PATH] = { _T("D:/Work/cmedia_server/webrtc_google/libmediasoupclient/build/test/Debug/test_mediasoupclient.exe  D:/Work/cmedia_server/webrtc_google/libmediasoupclient/build/test/Debug/client.cfg") };
-	////char * szApp = "C:/Users/Public/Nwt/cache/recv/DESKTOP-QL/JJ202111121500/WindowsNoEditor/Prj_ChengDu.exe";
-	//TCHAR  szApp[MAX_PATH] = { L"D:/Work/cmedia_server/webrtc_google/src/out/test_vs_debug/peerconnection_desktop.exe" };
-	//TCHAR szCmdLine[MAX_PATH] = {
-	//	L"C:\\Windows\\System32\\rundll32.exe"
-	//	L" D:\\Test.dll,TestFunc" // 注意前面的空格
-	//};//CREATE_NO_WINDOW
-	//if (::CreateProcess(NULL, szApp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-	//{
-	//	CloseHandle(pi.hThread);
-	//	CloseHandle(pi.hProcess);
-	//}
-	//Sleep(10);
-	//HWND hWinHandle = ::FindWindow(NULL, L"WebRTC_DESKTOP");
-//	system("D:/Work/cmedia_server/webrtc_google/src/out/test_vs_debug/peerconnection_desktop.exe");
-	/*PROCESS_INFORMATION pi = { 0 };
-	TCHAR  szApp[MAX_PATH] = { L"C:/Program Files/VideoLAN/VLC/vlc.exe  rtmp://127.0.0.1/live/test" };
-	if (::CreateProcess(NULL, szApp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-	{
-
-	}*/
-	/*int sum = 0;
-	while (sum < 2)
-	{
-		printf("sleep 100 ... \n");
-		++sum;
-		::Sleep(100);
-	}*/
-	//start_kill();
-	//signal(SIGINT, signalHandler);
 	RegisterSignal();
 	const char* config_filename = "client.cfg";
 	if (argc > 1)
@@ -811,7 +746,7 @@ int main(int argc, char* argv[])
 	const char * envServerUrl = origin.c_str();
 	std::string room_name =  chen::g_cfg.get_string(chen::ECI_Room_Name);
 	const char * envRoomId = room_name.c_str();
-	const char * envEnableAudio = "true";
+	const char * envEnableAudio = "false";
 	std::string client_name = chen::g_cfg.get_string(chen::ECI_Client_Name);
 	const char * name =  client_name.c_str();
 	const char* envUseSimulcast = "false";
@@ -867,19 +802,7 @@ int main(int argc, char* argv[])
 	std::cout << "[INFO] welcome to mediasoup broadcaster app!\n" << std::endl;
 
 	std::cout << "[INFO] verifying that room '" << envRoomId << "' exists..." << std::endl;
-	/*auto r = cpr::GetAsync(cpr::Url{ baseUrl }, cpr::VerifySsl{ verifySsl }).get();
-
-	if (r.status_code != 200)
-	{
-		std::cerr << "[ERROR] unable to retrieve room info"
-		          << " [status code:" << r.status_code << ", body:\"" << r.text << "\"]" << std::endl;
-
-		return 1;
-	}
-	else
-	{
-		std::cout << "[INFO] found room" << envRoomId << std::endl;
-	}*/
+ 
 	std::string host = chen::g_cfg.get_string(chen::ECI_MediaSoup_Host) ;
 	httplib::Client cli(host, chen::g_cfg.get_uint32(chen::ECI_MediaSoup_Http_Port));
 	std::string url = baseUrl;
@@ -911,9 +834,9 @@ int main(int argc, char* argv[])
 	std::string new_url  =  url + "/chensong";
 	std::set<std::string> dataProduceIds;
 
-	std::thread(
-	&config_name
-	).detach();
+	//std::thread(
+	//&config_name
+	//).detach();
 	while (!stoped)
 	{
 		//broadcaster.createDataConsumer();

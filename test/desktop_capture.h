@@ -8,7 +8,7 @@
 #include "modules/desktop_capture/desktop_capturer.h"
 #include "modules/desktop_capture/desktop_frame.h"
 #include "api/video/i420_buffer.h"
-
+#include "capture.h"
 
 #include <thread>
 #include <atomic>
@@ -26,9 +26,11 @@ class DesktopCapture : public DesktopCaptureSource,
 
   void StartCapture();
   void StopCapture();
+  void OnOsgCaptureResult(webrtc::DesktopCapturer::Result result, unsigned char * rgba, int32_t width, int32_t height);
 
  private:
   DesktopCapture();
+  void _work_thread();
 
   void Destory();
 
@@ -38,13 +40,13 @@ class DesktopCapture : public DesktopCaptureSource,
 
   void OnCaptureResult(webrtc::DesktopCapturer::Result result,
                        std::unique_ptr<webrtc::DesktopFrame> frame) override;
-
   std::unique_ptr<webrtc::DesktopCapturer> dc_;
-
+  //std::unique_ptr<CaptureScreen>
   size_t fps_;
   std::string window_title_;
 
   std::unique_ptr<std::thread> capture_thread_;
+  std::thread					m_work_thread;
   std::atomic_bool start_flag_;
 
   rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
