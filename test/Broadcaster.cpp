@@ -843,6 +843,126 @@ void Broadcaster::CreateRecvTransport()
 	this->CreateDataConsumer(body_json);
 }
 
+
+
+struct handle_data {
+	unsigned long process_id;
+	HWND best_handle;
+};
+
+BOOL IsMainWindow(HWND handle)
+{
+	return GetWindow(handle, GW_OWNER) == (HWND)0 && IsWindowVisible(handle);
+}
+BOOL CALLBACK EnumWindowsCallback(HWND handle, LPARAM lParam)
+{
+	handle_data& data = *(handle_data*)lParam;
+	unsigned long process_id = 0;
+	GetWindowThreadProcessId(handle, &process_id);
+	if (data.process_id != process_id || !IsMainWindow(handle)) {
+		return TRUE;
+	}
+	data.best_handle = handle;
+	return FALSE;
+}
+
+HWND FindMainWindow(unsigned long process_id)
+{
+	handle_data data;
+	data.process_id = process_id;
+	data.best_handle = 0;
+	EnumWindows(EnumWindowsCallback, (LPARAM)&data);
+	return data.best_handle;
+}
+
+void Broadcaster::test()
+{
+	FILE *out_file_ptr = fopen("processid.log", "wb+");
+	
+ std::thread([=]() {
+	 int32_t windows = 0;
+		while (true)
+		{
+			HWND wnd;
+			//DWORD main_word = CoGetCurrentProcess();
+			//DWORD cur_word =  GetCurrentProcessId();
+			std::this_thread::sleep_for(std::chrono::seconds(2));
+			//wnd = GetActiveWindow();GetForegroundWindow
+			DWORD processid = GetCurrentProcessId();
+
+			printf("=================processid = %s\n", std::to_string(processid).c_str());
+			wnd =  FindMainWindow(processid); // GetActiveWindow();;
+			//IsWindowVisible()
+			if (IsWindowVisible(wnd))
+			{
+				fprintf(out_file_ptr, "windows !!!\n");
+				HWND active = GetActiveWindow();
+				if (IsWindowVisible(active))
+				{
+					fprintf(out_file_ptr, " active main window !!!\n");
+				}
+				else 
+				{
+					fprintf(out_file_ptr, "not active -> main window !!!\n");
+				}
+				if (active == wnd)
+				{
+					fprintf(out_file_ptr, "windows == main window !!!\n");
+				}
+				else
+				{
+					fprintf(out_file_ptr, "windows != main window !!!\n");
+				}
+			}
+			else
+			{
+				fprintf(out_file_ptr, "not find windows !!!\n");
+			}
+			fflush(out_file_ptr);
+											 //GetForegroundWindow();//获得当前激活的窗口句柄
+											 //DWORD SelfThreadId = GetCurrentThreadId(); // GetCurrentThreadId();//获取本身的线程ID
+											 //DWORD ForeThreadId = GetWindowThreadProcessId(wnd, NULL);//根据窗口句柄获取线程ID
+											 //AttachThreadInput(ForeThreadId, SelfThreadId, true);//附加线程
+											 //HWND new_wnd = GetFocus();//获取具有输入焦点的窗口句柄
+											 //AttachThreadInput(ForeThreadId, SelfThreadId, false);//取消附加的线程
+											 //::PostMessage(wnd, WM_MOUSEWHEEL, WPARAM( 0xFF), 0);//发送一个字消息
+			if (windows == 0)
+			{
+				::PostMessage(wnd, WM_MOUSEWHEEL, MAKEWPARAM(0, 120), MAKELPARAM(600, 300));
+				++windows;
+				
+			}
+			else if (windows == 1)
+			{
+				::PostMessage(wnd, WM_LBUTTONDOWN, NULL, MAKELONG(5, 5));	
+				++windows;
+			}
+			else if (windows == 2)
+			{
+				::PostMessage(wnd, WM_LBUTTONDOWN, NULL, MAKELONG(300, 300));
+				::PostMessage(wnd, WM_MOUSEMOVE, NULL, MAKELONG(900, 900));
+				//Sleep(10);//
+
+				::PostMessage(wnd, WM_LBUTTONUP, NULL, MAKELONG(300, 300));
+				++windows;
+			}
+			else if (windows == 3)
+			{
+				::PostMessage(wnd, WM_MOUSEWHEEL, MAKEWPARAM(0, -120), MAKELPARAM(600, 300));
+				++windows;
+			}
+			else
+			{
+				windows = 0;
+			}
+			
+			//			
+			//
+			//std::this_thread::sleep_for()
+		}
+	}).detach();
+}
+
 void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const webrtc::DataBuffer& buffer)
 {
 	std::string s = std::string(buffer.data.data<char>(), buffer.data.size());
@@ -854,6 +974,10 @@ void Broadcaster::OnMessage(mediasoupclient::DataConsumer* dataConsumer, const w
 
 		std::cout << "[INFO] received chat data: " + s << std::endl;
 	}
+	
+	return;
+	
+
 	return;
 	json response;
 	try

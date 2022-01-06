@@ -336,7 +336,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="..\..\test\desktop_capture.cc" />
     <ClCompile Include="..\..\test\desktop_capture_source.cc" />
     <ClCompile Include="..\..\test\peerConnectionUtils.cpp" />
-    <ClCompile Include="..\..\test\test\fake_audio_capture_module.cc" />
     <ClCompile Include="..\..\test\wsclient.cpp" />
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\Broadcaster.cpp" />
     <ClCompile Include="D:\Work\cmedia_server\webrtc_google\libmediasoupclient\test\httplib.cc" />
@@ -380,7 +379,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="..\..\test\desktop_capture.h" />
     <ClInclude Include="..\..\test\desktop_capture_source.h" />
     <ClInclude Include="..\..\test\peerConnectionUtils.hpp" />
-    <ClInclude Include="..\..\test\test\fake_audio_capture_module.h" />
     <ClInclude Include="..\..\test\test\fake_periodic_video_source.h" />
     <ClInclude Include="..\..\test\test\fake_periodic_video_track_source.h" />
     <ClInclude Include="..\..\test\test\frame_generator_capturer_video_track_source.h" />

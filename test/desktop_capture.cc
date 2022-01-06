@@ -252,7 +252,7 @@ void DesktopCapture::OnOsgCaptureResult(webrtc::DesktopCapturer::Result result, 
 		i420_buffer_->StrideY(), i420_buffer_->MutableDataU(),
 		i420_buffer_->StrideU(), i420_buffer_->MutableDataV(),
 		i420_buffer_->StrideV(), 0, 0, width, height, width,
-		height, libyuv::kRotate0, libyuv::FOURCC_ARGB); // FOURCC_BGRA
+		height, libyuv::kRotate180, libyuv::FOURCC_BGR3); // FOURCC_BGRA
 
 	//if (out_yuv_file_ptr)
 	//{
@@ -276,6 +276,7 @@ void DesktopCapture::OnOsgCaptureResult(webrtc::DesktopCapturer::Result result, 
 	}
 
 }
+osg::ref_ptr<osgViewer::Viewer>viewer;
 void DesktopCapture::StartCapture() {
   if (start_flag_) {
     RTC_LOG(WARNING) << "Capture already been running...";
@@ -301,22 +302,37 @@ void DesktopCapture::StartCapture() {
 		  dc_->Start(this);
 	  }
   
-	
+	  std::this_thread::sleep_for(std::chrono::seconds(10));
+	  int count = 0;
     while (start_flag_) 
 	{
 		if (chen::g_cfg.get_int32(chen::ECI_Capture_Type))
 		{
+			
 			dc_->CaptureFrame();
+			
+			
 		}
 		else
 		{
 			CaptureScreen::Get()->CaptureFrame();
+			/*	if (count < 1)
+				{
+					++count;
+					viewer->getEventQueue()->mouseScroll(osgGA::GUIEventAdapter::SCROLL_DOWN);
+				}
+				else
+				{
+					--count;
+					viewer->getEventQueue()->mouseScroll(osgGA::GUIEventAdapter::SCROLL_UP);
+				}
+				std::this_thread::sleep_for(std::chrono::seconds(1));*/
 		}
 		
-     
+		 
 	  
 	//  RTC_LOG(LS_INFO) << "captureFrame fps = " << elapse;
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps_));
+      std::this_thread::sleep_for(std::chrono::microseconds(1000000 / fps_));
     }
   }));
 }
@@ -333,7 +349,7 @@ void DesktopCapture::StopCapture() {
 void DesktopCapture::_work_thread()
 {
 	osg::DisplaySettings::instance()->setNumMultiSamples(16);
-	osg::ref_ptr<osgViewer::Viewer>viewer = new osgViewer::Viewer;
+	viewer = new osgViewer::Viewer;
 	osg::ref_ptr<osg::Group> sceneRoot = new osg::Group;
 	viewer->getCamera()->addPreDrawCallback(CaptureScreen::Get());
 	viewer->setSceneData(osgDB::readNodeFile("D:/Work/cmedia_server/webrtc_google/libmediasoupclient/build/test/cow.ive"));

@@ -11,7 +11,7 @@
 #include <iostream>
 #include "desktop_capture.h"
 #include "ccfg.h"
-#include "pc/test/fake_audio_capture_module.h"
+//#include "pc/test/fake_audio_capture_module.h"
 #include "pc/test/fake_periodic_video_track_source.h"
 #include "pc/test/frame_generator_capturer_video_track_source.h"
 #include "system_wrappers/include/clock.h"
@@ -19,8 +19,8 @@
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/create_peerconnection_factory.h"
 #include "api/video_codecs/builtin_video_decoder_factory.h"
-#include "api/video_codecs/builtin_video_encoder_factory.h"
-#include "test/fake_audio_capture_module.h"
+//#include "api/video_codecs/builtin_video_encoder_factory.h"
+//#include "test/fake_audio_capture_module.h"
 static rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> peerConnectionFactory{ nullptr };
 
 static rtc::scoped_refptr<webrtc::AudioSourceInterface> audioSource{ nullptr };
@@ -110,16 +110,16 @@ static void createPeerConnectionFactory()
 	{
 		throw std::runtime_error("Thread start errored");
 	}
-	auto fakeAudioCaptureModule = cFakeAudioCaptureModule::Create();
+	/*auto fakeAudioCaptureModule = cFakeAudioCaptureModule::Create();
 	if (!fakeAudioCaptureModule)
 	{
 		RTC_LOG(LS_ERROR) << "audio capture module creation errored";
-	}
+	}*/
 	peerConnectionFactory = webrtc::CreatePeerConnectionFactory(
 		networkThread,
 	  workerThread,
 	  signalingThread,
-		fakeAudioCaptureModule /*nullptr*/ /*default_adm*/,
+		nullptr /*nullptr*/ /*default_adm*/,
 	  webrtc::CreateBuiltinAudioEncoderFactory(),
 	  webrtc::CreateBuiltinAudioDecoderFactory(),
 	  webrtc::CreateBuiltinVideoEncoderFactory(),

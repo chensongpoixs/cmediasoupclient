@@ -50,6 +50,7 @@ class DesktopCapture : public DesktopCaptureSource,
   std::atomic_bool start_flag_;
 
   rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
+  
 };
 
 

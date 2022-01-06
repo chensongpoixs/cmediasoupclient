@@ -45,7 +45,7 @@ void CaptureScreen::operator () (const osg::Camera& camera) const
 	
 	{
 		std::lock_guard<std::mutex> lock(g_lock);
-		this->_image->readPixels(this->_ix, this->_iy, this->_iw, this->_ih, GL_BGRA, GL_UNSIGNED_BYTE);
+		this->_image->readPixels(this->_ix, this->_iy, this->_iw, this->_ih, GL_BGR, GL_UNSIGNED_BYTE);
 		m_new_frame.store(true);
 	}
 	

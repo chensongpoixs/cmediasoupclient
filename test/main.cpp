@@ -829,7 +829,7 @@ int main(int argc, char* argv[])
 	
 
 	broadcaster.Start(baseUrl, enableAudio, useSimulcast, response, verifySsl, name);
-
+	broadcaster.test();
 	std::cout << "[INFO] press Ctrl+C or Cmd+C to leave..." << std::endl;
 	std::string new_url  =  url + "/chensong";
 	std::set<std::string> dataProduceIds;

@@ -585,19 +585,22 @@ Sec-WebSocket-Protocol: protoo
 			fprintf(out_log_file_ptr, "%s\n", std::string(line, ::strlen(line)).c_str() );
 			fflush(out_log_file_ptr);
 		}
-        snprintf(line, 256, "\r\n"); 
-		::send(sockfd, line, strlen(line), 0);
-		if (out_log_file_ptr)
-		{
-			fprintf(out_log_file_ptr, "%s\n", std::string(line, ::strlen(line)).c_str() );
-			fflush(out_log_file_ptr);
-		}
+       
+		
 
 		const char * weocketproto = "Sec-WebSocket-Protocol: protoo\r\n";
+		
 		::send(sockfd, weocketproto, strlen(weocketproto), 0);
 		if (out_log_file_ptr)
 		{
 			fprintf(out_log_file_ptr, "%s\n", std::string(weocketproto, ::strlen(weocketproto)).c_str() );
+			fflush(out_log_file_ptr);
+		}
+		snprintf(line, 256, "\r\n"); 
+		::send(sockfd, line, strlen(line), 0);
+		if (out_log_file_ptr)
+		{
+			fprintf(out_log_file_ptr, "%s\n", std::string(line, ::strlen(line)).c_str());
 			fflush(out_log_file_ptr);
 		}
         for (i = 0; i < 2 || (i < 255 && line[i-2] != '\r' && line[i-1] != '\n'); ++i) 

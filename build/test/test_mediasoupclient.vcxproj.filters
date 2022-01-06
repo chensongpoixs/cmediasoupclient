@@ -22,7 +22,6 @@
     <ClCompile Include="..\..\test\cwebsocket_mgr.cpp" />
     <ClCompile Include="..\..\test\peerConnectionUtils.cpp" />
     <ClCompile Include="..\..\test\ccfg.cpp" />
-    <ClCompile Include="..\..\test\test\fake_audio_capture_module.cc" />
     <ClCompile Include="..\..\test\cmsg_header.cpp">
       <Filter>common</Filter>
     </ClCompile>
@@ -85,7 +84,6 @@
     <ClInclude Include="..\..\test\cwebsocket_mgr.h" />
     <ClInclude Include="..\..\test\peerConnectionUtils.hpp" />
     <ClInclude Include="..\..\test\ccfg.h" />
-    <ClInclude Include="..\..\test\test\fake_audio_capture_module.h" />
     <ClInclude Include="..\..\test\test\fake_periodic_video_source.h" />
     <ClInclude Include="..\..\test\test\fake_periodic_video_track_source.h" />
     <ClInclude Include="..\..\test\test\frame_generator_capturer_video_track_source.h" />

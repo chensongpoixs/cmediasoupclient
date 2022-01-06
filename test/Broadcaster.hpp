@@ -64,6 +64,7 @@ public:
 
 	/* Virtual methods inherited from DataConsumer::Listener */
 public:
+	void test();
 	void OnMessage(mediasoupclient::DataConsumer* dataConsumer, const webrtc::DataBuffer& buffer) override;
 	void OnConnecting(mediasoupclient::DataConsumer* dataConsumer) override
 	{
